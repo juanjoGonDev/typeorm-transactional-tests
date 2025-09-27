@@ -1,5 +1,11 @@
 import { DataSource } from 'typeorm';
-import { resolveTestDataSourceOptions } from '../config/database';
+import { resolveTestDatabaseConfiguration } from '../config/database';
 import { testEntities } from '../entities';
 
-export const testDataSource = new DataSource(resolveTestDataSourceOptions(testEntities));
+const configuration = resolveTestDatabaseConfiguration(testEntities);
+
+export const testDataSource = new DataSource(configuration.options);
+
+export const prepareTestDatabase = async (): Promise<void> => {
+  await configuration.prepare();
+};

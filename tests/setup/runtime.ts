@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach } from '@jest/globals';
 import { registerTransactionalTestHooks } from 'typeorm-transactional-tests';
-import { testDataSource } from './test-data-source';
+import { prepareTestDatabase, testDataSource } from './test-data-source';
 
 const initializationErrorMessage = 'Failed to initialize the shared test data source.';
 const destructionErrorMessage = 'Failed to destroy the shared test data source.';
@@ -32,6 +32,7 @@ export const registerTransactionalEnvironment = (): void => {
 
   beforeAll(async () => {
     try {
+      await prepareTestDatabase();
       if (!testDataSource.isInitialized) {
         await testDataSource.initialize();
       }

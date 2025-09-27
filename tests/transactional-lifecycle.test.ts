@@ -19,32 +19,35 @@ const transientBirthDate = new Date('1990-01-01');
 describe(suiteTitle, () => {
   it('persists entities inside the active transaction', async () => {
     const seedSummary = await seedDatabase(testDataSource.manager);
-    const repository = testDataSource.getRepository(User);
-    const initialCount = await repository.count();
-    expect(initialCount).toBe(seedSummary.users);
-
-    const entity = repository.create({
-      fullName: transientUserName,
-      email: transientUserEmail,
-      status: userStatuses.active,
-      marketingOptIn: false,
-      profile: testDataSource.manager.create(Profile, {
-        bio: transientUserBio,
-        birthDate: transientBirthDate
-      }),
-      addresses: [
-        testDataSource.manager.create(Address, {
-          street: transientStreet,
-          city: transientCity,
-          country: transientCountry,
-          postalCode: transientPostalCode,
-          isPrimary: true
-        })
-      ]
+    const result = await testDataSource.manager.transaction(async (manager) => {
+      const repository = manager.getRepository(User);
+      const entity = repository.create({
+        fullName: transientUserName,
+        email: transientUserEmail,
+        status: userStatuses.active,
+        marketingOptIn: false,
+        profile: manager.create(Profile, {
+          bio: transientUserBio,
+          birthDate: transientBirthDate
+        }),
+        addresses: [
+          manager.create(Address, {
+            street: transientStreet,
+            city: transientCity,
+            country: transientCountry,
+            postalCode: transientPostalCode,
+            isPrimary: true
+          })
+        ]
+      });
+      await repository.save(entity);
+      const countInside = await repository.count();
+      return countInside;
     });
 
-    await repository.save(entity);
+    const repository = testDataSource.getRepository(User);
     const count = await repository.count();
+    expect(result).toBe(seedSummary.users + 1);
     expect(count).toBe(seedSummary.users + 1);
   });
 

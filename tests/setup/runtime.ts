@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach } from '@jest/globals';
+import { registerTransactionalTestHooks } from 'typeorm-transactional-tests';
 import { seedEnvironment } from '../seeds';
-import { transactionalContext } from './transactional-context';
 import { testDataSource } from './test-data-source';
 
 const initializationErrorMessage = 'Failed to initialize the shared test data source.';
@@ -36,6 +36,14 @@ const logSeed = (): void => {
 };
 
 export const registerTransactionalEnvironment = (): void => {
+  registerTransactionalTestHooks({
+    dataSource: testDataSource,
+    hooks: {
+      beforeEach,
+      afterEach
+    }
+  });
+
   beforeAll(async () => {
     try {
       if (!testDataSource.isInitialized) {
@@ -55,13 +63,5 @@ export const registerTransactionalEnvironment = (): void => {
     } catch (error) {
       throw new Error(composeErrorMessage(destructionErrorMessage, toError(error)));
     }
-  });
-
-  beforeEach(async () => {
-    await transactionalContext.init();
-  });
-
-  afterEach(async () => {
-    await transactionalContext.finish();
   });
 };

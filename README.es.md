@@ -2,33 +2,35 @@
 
 ## Descripción general
 
-TypeORM Transactional Tests envuelve cada spec de Jest en una transacción aislada. El helper recibe cualquier `DataSource` inicializado, sustituye su manager durante la prueba y restaura el manager original tras ejecutar el rollback. El paquete facilita bancos de pruebas reutilizables que mantienen limpia la base de datos de integración.
+TypeORM Transactional Tests envuelve cada spec de Jest en una transacción de base de datos aislada. El helper acepta cualquier `DataSource` inicializado, reemplaza su manager durante la spec y restaura el manager original después del rollback. El paquete está orientado a configuraciones de pruebas reutilizables que mantienen la base de datos de integración limpia.
 
 ## Características
 
-- Ciclo de vida transaccional con hooks `init` y `finish` explícitos.
+- Helper de ciclo de vida transaccional con hooks explícitos `init` y `finish`.
+- Registro de hooks de Jest que abre y revierte transacciones automáticamente.
 - Compatibilidad con MySQL, MariaDB, PostgreSQL, SQLite y Better SQLite 3.
-- Factorías deterministas alimentadas por una semilla reproducible.
-- Configuración compartida que inicia una única conexión por worker y ejecuta las pruebas en paralelo.
-- Informes de cobertura activados por defecto mediante `pnpm test`.
-- La compilación generada por `pnpm build` se reutiliza durante el testeo para simular una instalación desde npm.
+- Fabricas de datos deterministas impulsadas por una semilla de ejecución reproducible.
+- Configuración de pruebas compartida que inicializa una única conexión por worker y ejecuta las specs en paralelo.
+- Informes de cobertura generados por defecto mediante `pnpm test`.
+- Artefactos de build generados por `pnpm build` y consumidos por Jest para simular una instalación del paquete.
 
 ## Instalación
 
 ```bash
 pnpm add typeorm-transactional-tests
-pnpm add typeorm # dependencia peer
+pnpm add typeorm # dependencia peer obligatoria
 ```
 
-Instala TypeORM en el proyecto anfitrión si aún no está presente.
+Instala TypeORM en el proyecto anfitrión si aún no está disponible.
 
 ## Uso
 
-Crea un archivo de configuración para Jest que inicialice el `DataSource` y registre el ciclo de vida transaccional.
+Crea un archivo de configuración de Jest que inicialice la conexión y registre el ciclo de vida transaccional.
 
 ```typescript
+import { afterAll, afterEach, beforeAll, beforeEach } from '@jest/globals';
 import { DataSource } from 'typeorm';
-import { createTransactionalTestContext } from 'typeorm-transactional-tests';
+import { registerTransactionalTestHooks } from 'typeorm-transactional-tests';
 
 const dataSource = new DataSource({
   type: 'mysql',
@@ -38,10 +40,16 @@ const dataSource = new DataSource({
   password: 'test',
   database: 'test',
   synchronize: true,
-  entities: [/* entidades */]
+  entities: []
 });
 
-const transactionalContext = createTransactionalTestContext(dataSource);
+registerTransactionalTestHooks({
+  dataSource,
+  hooks: {
+    beforeEach,
+    afterEach
+  }
+});
 
 beforeAll(async () => {
   await dataSource.initialize();
@@ -50,31 +58,23 @@ beforeAll(async () => {
 afterAll(async () => {
   await dataSource.destroy();
 });
-
-beforeEach(async () => {
-  await transactionalContext.init();
-});
-
-afterEach(async () => {
-  await transactionalContext.finish();
-});
 ```
 
-Importa `createTransactionalTestContext` en tus pruebas y realiza las aserciones sobre repositorios o el entity manager. Todo lo que suceda entre `init` y `finish` se revierte automáticamente.
+Importa tus repositorios o managers dentro de las specs. Todas las mutaciones ejecutadas entre los hooks registrados se revierten de forma automática.
 
 ## Ejecución de pruebas
 
-La suite crea fixtures reproducibles por spec y expone la variable de entorno `TEST_SEED` para controlar el orden de ejecución. `pnpm test` ejecuta Jest en paralelo, obliga a generar cobertura y compila el paquete de antemano para ejercitar el artefacto publicado.
+La suite genera datos reproducibles por spec y expone la variable de entorno `TEST_SEED` para controlar el orden de ejecución. `pnpm test` ejecuta Jest en workers paralelos, fuerza la recolección de cobertura y compila el paquete antes de las pruebas para ejercitar la salida empaquetada.
 
 ## Integración continua
 
-El flujo de GitHub Actions ejecuta el linting y prueba la suite sobre una matriz de bases de datos transaccionales. Un trabajo final de agregación falla cuando alguno de los trabajos de la matriz produce errores, lo que mantiene un único check obligatorio aunque se añadan nuevas bases de datos.
+El workflow de GitHub Actions ejecuta el linting y la suite de Jest contra una matriz de bases de datos transaccionales. Un job final de agregación falla cuando cualquier job de la matriz reporta errores, manteniendo estable el check requerido incluso cuando se añaden nuevas bases de datos.
 
 ## Desarrollo
 
-- `pnpm lint` valida la calidad del código.
-- `pnpm build` genera el bundle en `dist`.
-- `pnpm test` recompila el paquete, ejecuta las pruebas de integración con datos semilla y verifica la instalación del tarball en un proyecto limpio.
+- `pnpm lint` verifica la calidad del código.
+- `pnpm build` genera el bundle de producción en `dist`.
+- `pnpm test` recompila el paquete, ejecuta las pruebas con datos semilla y comprueba que el tarball se pueda instalar en un proyecto limpio.
 
 ## Licencia
 

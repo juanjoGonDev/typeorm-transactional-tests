@@ -29,70 +29,102 @@ jobs:
         run: pnpm lint
 
   test:
+    name: 🗂️ ${{ matrix.database.name }}
     needs: lint
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        database: [mysql, mariadb, postgres, sqlite, better-sqlite3]
+        database:
+          - name: mysql - 8.0
+            use-service: true
+            service:
+              image: mysql:8
+              env:
+                MYSQL_ROOT_PASSWORD: test
+                MYSQL_DATABASE: test
+              ports:
+                - 3306:3306
+              options: >-
+                --health-cmd "mysqladmin ping -h 127.0.0.1 -ptest"
+                --health-interval 10s
+                --health-timeout 5s
+                --health-retries 10
+            envScript: |
+              echo "TEST_DB_TYPE=mysql" >> "$GITHUB_ENV"
+              echo "TEST_MYSQL_HOST=127.0.0.1" >> "$GITHUB_ENV"
+              echo "TEST_MYSQL_PORT=3306" >> "$GITHUB_ENV"
+              echo "TEST_MYSQL_USER=root" >> "$GITHUB_ENV"
+              echo "TEST_MYSQL_PASSWORD=test" >> "$GITHUB_ENV"
+              echo "TEST_MYSQL_DATABASE=test" >> "$GITHUB_ENV"
+              echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
+            setupScript: ""
+          - name: mariadb - 11
+            use-service: true
+            service:
+              image: mariadb:11
+              env:
+                MARIADB_ROOT_PASSWORD: test
+                MARIADB_DATABASE: test
+              ports:
+                - 3306:3306
+              options: >-
+                --health-cmd "mysqladmin ping -h 127.0.0.1 -ptest"
+                --health-interval 10s
+                --health-timeout 5s
+                --health-retries 10
+            envScript: |
+              echo "TEST_DB_TYPE=mariadb" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_HOST=127.0.0.1" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_PORT=3306" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_USER=root" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_PASSWORD=test" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_DATABASE=test" >> "$GITHUB_ENV"
+              echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
+            setupScript: ""
+          - name: postgres - 16
+            use-service: true
+            service:
+              image: postgres:16
+              env:
+                POSTGRES_USER: postgres
+                POSTGRES_PASSWORD: test
+                POSTGRES_DB: test
+              ports:
+                - 5432:5432
+              options: >-
+                --health-cmd "pg_isready -q -d $${POSTGRES_DB} -U $${POSTGRES_USER}"
+                --health-interval 10s
+                --health-timeout 5s
+                --health-retries 10
+            envScript: |
+              echo "TEST_DB_TYPE=postgres" >> "$GITHUB_ENV"
+              echo "TEST_POSTGRES_HOST=127.0.0.1" >> "$GITHUB_ENV"
+              echo "TEST_POSTGRES_PORT=5432" >> "$GITHUB_ENV"
+              echo "TEST_POSTGRES_USER=postgres" >> "$GITHUB_ENV"
+              echo "TEST_POSTGRES_PASSWORD=test" >> "$GITHUB_ENV"
+              echo "TEST_POSTGRES_DATABASE=test" >> "$GITHUB_ENV"
+              echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
+            setupScript: ""
+          - name: sqlite - in-memory
+            use-service: false
+            service: null
+            envScript: |
+              echo "TEST_DB_TYPE=sqlite" >> "$GITHUB_ENV"
+              echo "TEST_SQLITE_DATABASE=:memory:" >> "$GITHUB_ENV"
+              echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
+            setupScript: ""
+          - name: better-sqlite3 - file
+            use-service: false
+            service: null
+            envScript: |
+              echo "TEST_DB_TYPE=better-sqlite3" >> "$GITHUB_ENV"
+              echo "TEST_BETTER_SQLITE_DATABASE=.tmp/better-sqlite/test.db" >> "$GITHUB_ENV"
+              echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
+            setupScript: |
+              mkdir -p .tmp/better-sqlite
     services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: test
-          MYSQL_DATABASE: test
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd "mysqladmin ping -h 127.0.0.1 -ptest"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-      mariadb:
-        image: mariadb:11
-        env:
-          MARIADB_ROOT_PASSWORD: test
-          MARIADB_DATABASE: test
-        ports:
-          - 3307:3306
-        options: >-
-          --health-cmd "mysqladmin ping -h 127.0.0.1 -ptest"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -q -d $${POSTGRES_DB} -U $${POSTGRES_USER}"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-    env:
-      TEST_DB_TYPE: ${{ matrix.database }}
-      TEST_MYSQL_HOST: 127.0.0.1
-      TEST_MYSQL_PORT: 3306
-      TEST_MYSQL_USER: root
-      TEST_MYSQL_PASSWORD: test
-      TEST_MYSQL_DATABASE: test
-      TEST_MARIADB_HOST: 127.0.0.1
-      TEST_MARIADB_PORT: 3307
-      TEST_MARIADB_USER: root
-      TEST_MARIADB_PASSWORD: test
-      TEST_MARIADB_DATABASE: test
-      TEST_POSTGRES_HOST: 127.0.0.1
-      TEST_POSTGRES_PORT: 5432
-      TEST_POSTGRES_USER: postgres
-      TEST_POSTGRES_PASSWORD: test
-      TEST_POSTGRES_DATABASE: test
-      TEST_SQLITE_DATABASE: ':memory:'
-      TEST_BETTER_SQLITE_DATABASE: './.tmp/better-sqlite/test.db'
-      TEST_SEED: ${{ github.run_id }}
+      database: ${{ matrix.database.service }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -107,9 +139,11 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Prepare better-sqlite storage
-        if: matrix.database == 'better-sqlite3'
-        run: mkdir -p .tmp/better-sqlite
+      - name: Configure database environment
+        run: ${{ matrix.database.envScript }}
+      - name: Prepare database instance
+        if: matrix.database.setupScript != ''
+        run: ${{ matrix.database.setupScript }}
       - name: Run tests
         run: pnpm test
 

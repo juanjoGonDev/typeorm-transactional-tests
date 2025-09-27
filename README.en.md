@@ -7,6 +7,7 @@ TypeORM Transactional Tests wraps every Jest spec in an isolated database transa
 ## Features
 
 - Transaction lifecycle helper with explicit `init` and `finish` hooks.
+- Jest hook registration that automatically opens and rolls back transactions.
 - Compatibility with MySQL, MariaDB, PostgreSQL, SQLite, and Better SQLite 3.
 - Deterministic data factories driven by a reproducible execution seed.
 - Shared test setup that initializes one data source per worker and runs specs in parallel.
@@ -27,8 +28,9 @@ Install TypeORM in the host project if it is not already available.
 Create a Jest setup file that initializes the data source and registers the transactional lifecycle.
 
 ```typescript
+import { afterAll, afterEach, beforeAll, beforeEach } from '@jest/globals';
 import { DataSource } from 'typeorm';
-import { createTransactionalTestContext } from 'typeorm-transactional-tests';
+import { registerTransactionalTestHooks } from 'typeorm-transactional-tests';
 
 const dataSource = new DataSource({
   type: 'mysql',
@@ -38,10 +40,16 @@ const dataSource = new DataSource({
   password: 'test',
   database: 'test',
   synchronize: true,
-  entities: [/* entities */]
+  entities: []
 });
 
-const transactionalContext = createTransactionalTestContext(dataSource);
+registerTransactionalTestHooks({
+  dataSource,
+  hooks: {
+    beforeEach,
+    afterEach
+  }
+});
 
 beforeAll(async () => {
   await dataSource.initialize();
@@ -50,17 +58,9 @@ beforeAll(async () => {
 afterAll(async () => {
   await dataSource.destroy();
 });
-
-beforeEach(async () => {
-  await transactionalContext.init();
-});
-
-afterEach(async () => {
-  await transactionalContext.finish();
-});
 ```
 
-Import `createTransactionalTestContext` in your specs and run your assertions against repositories or the entity manager. Every mutation executed between `init` and `finish` is rolled back automatically.
+Import your repositories or managers inside the specs. Every mutation executed between the registered hooks is rolled back automatically.
 
 ## Test Execution
 

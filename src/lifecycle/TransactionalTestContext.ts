@@ -1,10 +1,12 @@
-import type { DataSource, EntityManager, IsolationLevel, QueryRunner } from 'typeorm';
+import type { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import { errorMessages } from '../constants/messages';
 
 export interface TransactionalTestLifecycle {
   readonly init: () => Promise<void>;
   readonly finish: () => Promise<void>;
 }
+
+type TransactionCallback<TResult> = (runManager: EntityManager) => Promise<TResult> | TResult;
 
 export class TransactionalTestContext implements TransactionalTestLifecycle {
   private readonly dataSource: DataSource;
@@ -85,7 +87,7 @@ export class TransactionalTestContext implements TransactionalTestLifecycle {
     });
   }
 
-  private extractTransactionCallback<T>(args: unknown[]): (manager: EntityManager) => Promise<T> | T {
+  private extractTransactionCallback<T>(args: ReadonlyArray<unknown>): TransactionCallback<T> {
     const [first, second] = args;
     if (this.isTransactionCallback<T>(first)) {
       return first;
@@ -96,7 +98,7 @@ export class TransactionalTestContext implements TransactionalTestLifecycle {
     throw new Error(errorMessages.transactionCallbackMissing);
   }
 
-  private isTransactionCallback<T>(candidate: unknown): candidate is (manager: EntityManager) => Promise<T> | T {
+  private isTransactionCallback<T>(candidate: unknown): candidate is TransactionCallback<T> {
     return typeof candidate === 'function';
   }
 
@@ -105,17 +107,13 @@ export class TransactionalTestContext implements TransactionalTestLifecycle {
     this.originalDataSourceTransaction = this.dataSource.transaction.bind(this.dataSource);
     this.originalManagerTransaction = manager.transaction.bind(manager);
 
-    const patched = async <T>(...args: unknown[]): Promise<T> => {
+    const patched = async <T>(...args: ReadonlyArray<unknown>): Promise<T> => {
       const callback = this.extractTransactionCallback<T>(args);
       const result = callback(manager);
       return Promise.resolve(result);
     };
 
-    const patchedWithIsolation = async <T>(
-      isolationOrCallback: IsolationLevel | ((runManager: EntityManager) => Promise<T> | T),
-      maybeCallback?: (runManager: EntityManager) => Promise<T> | T
-    ): Promise<T> => {
-      const args = maybeCallback === undefined ? [isolationOrCallback] : [isolationOrCallback, maybeCallback];
+    const patchedWithIsolation = async <T>(...args: ReadonlyArray<unknown>): Promise<T> => {
       return patched<T>(...args);
     };
 

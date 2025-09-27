@@ -1,6 +1,6 @@
 import type { EntitySchema } from 'typeorm';
 
-type EntityConstructor = new () => Record<string, unknown>;
+type EntityConstructor = new () => object;
 
 export type EntityDefinition = string | EntitySchema<unknown> | EntityConstructor;
 export type EntityDefinitionList = ReadonlyArray<EntityDefinition>;

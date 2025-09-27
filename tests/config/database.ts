@@ -1,7 +1,7 @@
 import type { DataSourceOptions } from 'typeorm';
-import type { EntityDefinition, EntityDefinitionList } from '../shared/entity-definition';
+import type { EntityDefinitionList } from '../shared/entity-definition';
 
-const supportedDriverTypes = ['mysql', 'postgres', 'sqlite'] as const;
+const supportedDriverTypes = ['mysql', 'mariadb', 'postgres', 'sqlite', 'better-sqlite3'] as const;
 
 const environmentVariableNames = {
   type: 'TEST_DB_TYPE',
@@ -12,6 +12,13 @@ const environmentVariableNames = {
     password: 'TEST_MYSQL_PASSWORD',
     database: 'TEST_MYSQL_DATABASE'
   },
+  mariadb: {
+    host: 'TEST_MARIADB_HOST',
+    port: 'TEST_MARIADB_PORT',
+    username: 'TEST_MARIADB_USER',
+    password: 'TEST_MARIADB_PASSWORD',
+    database: 'TEST_MARIADB_DATABASE'
+  },
   postgres: {
     host: 'TEST_POSTGRES_HOST',
     port: 'TEST_POSTGRES_PORT',
@@ -21,16 +28,27 @@ const environmentVariableNames = {
   },
   sqlite: {
     database: 'TEST_SQLITE_DATABASE'
+  },
+  betterSqlite: {
+    database: 'TEST_BETTER_SQLITE_DATABASE'
   }
 } as const;
 
-const mysqlDefaults = {
+const mysqlDefaults: MysqlLikeDefaults = {
   host: '127.0.0.1',
   port: 3306,
   username: 'root',
   password: 'test',
   database: 'test'
-} as const;
+};
+
+const mariadbDefaults: MysqlLikeDefaults = {
+  host: '127.0.0.1',
+  port: 3307,
+  username: 'root',
+  password: 'test',
+  database: 'test'
+};
 
 const postgresDefaults = {
   host: '127.0.0.1',
@@ -48,7 +66,17 @@ type SupportedDriver = (typeof supportedDriverTypes)[number];
 
 type EntityCollection = EntityDefinitionList;
 
-const toEntityList = (entities: EntityCollection): EntityDefinition[] => {
+type MysqlLikeDefaults = {
+  readonly host: string;
+  readonly port: number;
+  readonly username: string;
+  readonly password: string;
+  readonly database: string;
+};
+
+type MysqlLikeEnv = typeof environmentVariableNames.mysql | typeof environmentVariableNames.mariadb;
+
+const toEntityList = (entities: EntityCollection): EntityDefinitionList => {
   return [...entities];
 };
 
@@ -69,15 +97,20 @@ const readInteger = (value: string | undefined, fallback: number): number => {
   return parsed;
 };
 
-const buildMysqlOptions = (entities: EntityCollection): DataSourceOptions => {
+const buildMysqlLikeOptions = (
+  entities: EntityCollection,
+  defaults: MysqlLikeDefaults,
+  envNames: MysqlLikeEnv,
+  type: 'mysql' | 'mariadb'
+): DataSourceOptions => {
   const env = process.env;
   return {
-    type: 'mysql',
-    host: env[environmentVariableNames.mysql.host] ?? mysqlDefaults.host,
-    port: readInteger(env[environmentVariableNames.mysql.port], mysqlDefaults.port),
-    username: env[environmentVariableNames.mysql.username] ?? mysqlDefaults.username,
-    password: env[environmentVariableNames.mysql.password] ?? mysqlDefaults.password,
-    database: env[environmentVariableNames.mysql.database] ?? mysqlDefaults.database,
+    type,
+    host: env[envNames.host] ?? defaults.host,
+    port: readInteger(env[envNames.port], defaults.port),
+    username: env[envNames.username] ?? defaults.username,
+    password: env[envNames.password] ?? defaults.password,
+    database: env[envNames.database] ?? defaults.database,
     synchronize: true,
     entities: toEntityList(entities)
   };
@@ -85,13 +118,14 @@ const buildMysqlOptions = (entities: EntityCollection): DataSourceOptions => {
 
 const buildPostgresOptions = (entities: EntityCollection): DataSourceOptions => {
   const env = process.env;
+  const names = environmentVariableNames.postgres;
   return {
     type: 'postgres',
-    host: env[environmentVariableNames.postgres.host] ?? postgresDefaults.host,
-    port: readInteger(env[environmentVariableNames.postgres.port], postgresDefaults.port),
-    username: env[environmentVariableNames.postgres.username] ?? postgresDefaults.username,
-    password: env[environmentVariableNames.postgres.password] ?? postgresDefaults.password,
-    database: env[environmentVariableNames.postgres.database] ?? postgresDefaults.database,
+    host: env[names.host] ?? postgresDefaults.host,
+    port: readInteger(env[names.port], postgresDefaults.port),
+    username: env[names.username] ?? postgresDefaults.username,
+    password: env[names.password] ?? postgresDefaults.password,
+    database: env[names.database] ?? postgresDefaults.database,
     synchronize: true,
     entities: toEntityList(entities)
   };
@@ -104,16 +138,32 @@ const buildSqliteOptions = (entities: EntityCollection): DataSourceOptions => {
     database: env[environmentVariableNames.sqlite.database] ?? sqliteDefaults.database,
     synchronize: true,
     entities: toEntityList(entities)
+  };
 };
+
+const buildBetterSqliteOptions = (entities: EntityCollection): DataSourceOptions => {
+  const env = process.env;
+  return {
+    type: 'better-sqlite3',
+    database: env[environmentVariableNames.betterSqlite.database] ?? sqliteDefaults.database,
+    synchronize: true,
+    entities: toEntityList(entities)
+  };
 };
 
 export const resolveTestDataSourceOptions = (entities: EntityCollection): DataSourceOptions => {
   const driver = normalizeDriver(process.env[environmentVariableNames.type]);
   if (driver === 'mysql') {
-    return buildMysqlOptions(entities);
+    return buildMysqlLikeOptions(entities, mysqlDefaults, environmentVariableNames.mysql, 'mysql');
+  }
+  if (driver === 'mariadb') {
+    return buildMysqlLikeOptions(entities, mariadbDefaults, environmentVariableNames.mariadb, 'mariadb');
   }
   if (driver === 'postgres') {
     return buildPostgresOptions(entities);
+  }
+  if (driver === 'better-sqlite3') {
+    return buildBetterSqliteOptions(entities);
   }
   return buildSqliteOptions(entities);
 };

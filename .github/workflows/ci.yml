@@ -17,11 +17,11 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: 8.15.4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20.16.0
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        database: [mysql, postgres, sqlite]
+        database: [mysql, mariadb, postgres, sqlite, better-sqlite3]
     services:
       mysql:
         image: mysql:8
@@ -43,6 +43,18 @@ jobs:
           MYSQL_DATABASE: test
         ports:
           - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -ptest"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: test
+          MARIADB_DATABASE: test
+        ports:
+          - 3307:3306
         options: >-
           --health-cmd "mysqladmin ping -h 127.0.0.1 -ptest"
           --health-interval 10s
@@ -68,25 +80,54 @@ jobs:
       TEST_MYSQL_USER: root
       TEST_MYSQL_PASSWORD: test
       TEST_MYSQL_DATABASE: test
+      TEST_MARIADB_HOST: 127.0.0.1
+      TEST_MARIADB_PORT: 3307
+      TEST_MARIADB_USER: root
+      TEST_MARIADB_PASSWORD: test
+      TEST_MARIADB_DATABASE: test
       TEST_POSTGRES_HOST: 127.0.0.1
       TEST_POSTGRES_PORT: 5432
       TEST_POSTGRES_USER: postgres
       TEST_POSTGRES_PASSWORD: test
       TEST_POSTGRES_DATABASE: test
       TEST_SQLITE_DATABASE: ':memory:'
+      TEST_BETTER_SQLITE_DATABASE: './.tmp/better-sqlite/test.db'
+      TEST_SEED: ${{ github.run_id }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: 8.15.4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20.16.0
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Prepare better-sqlite storage
+        if: matrix.database == 'better-sqlite3'
+        run: mkdir -p .tmp/better-sqlite
       - name: Run tests
         run: pnpm test
+
+  check-all:
+    needs:
+      - lint
+      - test
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure all jobs succeeded
+        run: |
+          if [ "${{ needs.lint.result }}" != "success" ]; then
+            echo "Lint job failed"
+            exit 1
+          fi
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "Test matrix failed"
+            exit 1
+          fi
+          echo "All checks passed"

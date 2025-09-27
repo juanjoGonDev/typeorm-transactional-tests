@@ -2,7 +2,7 @@
   "name": "typeorm-transactional-tests",
   "version": "0.1.0",
   "description": "Automated transactional lifecycle helpers for TypeORM tests",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -14,11 +14,12 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\"",
     "prebuild": "pnpm clean",
     "prepare": "pnpm build",
-    "test": "jest"
+    "pretest": "pnpm build",
+    "test": "jest --coverage"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/example/typeorm-transactional-tests.git"
+    "url": "git+https://github.com/juanjoGonDev/typeorm-transactional-tests.git"
   },
   "keywords": [
     "typeorm",
@@ -26,7 +27,7 @@
     "transactions",
     "jest"
   ],
-  "author": "",
+  "author": "Juanjo Gonz\u00e1lez (https://github.com/juanjoGonDev)",
   "engines": {
     "node": ">=18"
   },
@@ -45,10 +46,18 @@
     "mysql2": "^3.11.2",
     "pg": "^8.11.5",
     "rimraf": "^5.0.5",
+    "seedrandom": "^3.0.5",
+    "sqlite3": "^5.1.7",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
-    "sqlite3": "^5.1.7"
+    "@jest/test-sequencer": "^29.7.0",
+    "@jest/test-result": "^29.7.0",
+    "@types/seedrandom": "^3.0.5"
   },
-  "packageManager": "pnpm@8.15.4"
+  "packageManager": "pnpm@8.15.4",
+  "volta": {
+    "node": "20.16.0",
+    "pnpm": "8.15.4"
+  }
 }

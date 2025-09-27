@@ -1,6 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach } from '@jest/globals';
 import { registerTransactionalTestHooks } from 'typeorm-transactional-tests';
-import { seedEnvironment } from '../seeds';
 import { testDataSource } from './test-data-source';
 
 const initializationErrorMessage = 'Failed to initialize the shared test data source.';
@@ -8,10 +7,6 @@ const destructionErrorMessage = 'Failed to destroy the shared test data source.'
 const fallbackErrorMessage = 'Unknown error';
 const causePrefix = 'Cause: ';
 const detailSeparator = ' ';
-const seedLogPrefix = 'Test execution seed: ';
-
-let seedLogged = false;
-
 const toError = (value: unknown): Error => {
   if (value instanceof Error) {
     return value;
@@ -24,15 +19,6 @@ const toError = (value: unknown): Error => {
 
 const composeErrorMessage = (message: string, cause: Error): string => {
   return `${message}${detailSeparator}${causePrefix}${cause.message}`;
-};
-
-const logSeed = (): void => {
-  if (seedLogged) {
-    return;
-  }
-  const seedValue = process.env[seedEnvironment.variable] ?? seedEnvironment.fallback;
-  console.info(`${seedLogPrefix}${seedValue}`);
-  seedLogged = true;
 };
 
 export const registerTransactionalEnvironment = (): void => {
@@ -49,7 +35,6 @@ export const registerTransactionalEnvironment = (): void => {
       if (!testDataSource.isInitialized) {
         await testDataSource.initialize();
       }
-      logSeed();
     } catch (error) {
       throw new Error(composeErrorMessage(initializationErrorMessage, toError(error)));
     }

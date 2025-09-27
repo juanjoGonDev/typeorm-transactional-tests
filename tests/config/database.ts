@@ -34,6 +34,11 @@ const environmentVariableNames = {
   }
 } as const;
 
+const schemaSynchronization = {
+  synchronize: true,
+  dropSchema: true
+} as const;
+
 const mysqlDefaults: MysqlLikeDefaults = {
   host: '127.0.0.1',
   port: 3306,
@@ -111,8 +116,8 @@ const buildMysqlLikeOptions = (
     username: env[envNames.username] ?? defaults.username,
     password: env[envNames.password] ?? defaults.password,
     database: env[envNames.database] ?? defaults.database,
-    synchronize: true,
-    entities: toEntityList(entities)
+    entities: toEntityList(entities),
+    ...schemaSynchronization
   };
 };
 
@@ -126,8 +131,8 @@ const buildPostgresOptions = (entities: EntityCollection): DataSourceOptions => 
     username: env[names.username] ?? postgresDefaults.username,
     password: env[names.password] ?? postgresDefaults.password,
     database: env[names.database] ?? postgresDefaults.database,
-    synchronize: true,
-    entities: toEntityList(entities)
+    entities: toEntityList(entities),
+    ...schemaSynchronization
   };
 };
 
@@ -136,8 +141,8 @@ const buildSqliteOptions = (entities: EntityCollection): DataSourceOptions => {
   return {
     type: 'sqlite',
     database: env[environmentVariableNames.sqlite.database] ?? sqliteDefaults.database,
-    synchronize: true,
-    entities: toEntityList(entities)
+    entities: toEntityList(entities),
+    ...schemaSynchronization
   };
 };
 
@@ -146,8 +151,8 @@ const buildBetterSqliteOptions = (entities: EntityCollection): DataSourceOptions
   return {
     type: 'better-sqlite3',
     database: env[environmentVariableNames.betterSqlite.database] ?? sqliteDefaults.database,
-    synchronize: true,
-    entities: toEntityList(entities)
+    entities: toEntityList(entities),
+    ...schemaSynchronization
   };
 };
 

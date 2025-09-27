@@ -2,8 +2,8 @@ import type { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import { errorMessages } from '../constants/messages';
 
 export interface TransactionalTestLifecycle {
-  readonly beforeEach: () => Promise<void>;
-  readonly afterEach: () => Promise<void>;
+  readonly init: () => Promise<void>;
+  readonly finish: () => Promise<void>;
 }
 
 export class TransactionalTestContext implements TransactionalTestLifecycle {
@@ -16,7 +16,7 @@ export class TransactionalTestContext implements TransactionalTestLifecycle {
     this.dataSource = dataSource;
   }
 
-  public readonly beforeEach = async (): Promise<void> => {
+  public readonly init = async (): Promise<void> => {
     if (!this.dataSource.isInitialized) {
       throw new Error(errorMessages.dataSourceNotInitialized);
     }
@@ -41,7 +41,7 @@ export class TransactionalTestContext implements TransactionalTestLifecycle {
     this.queryRunner = queryRunner;
   };
 
-  public readonly afterEach = async (): Promise<void> => {
+  public readonly finish = async (): Promise<void> => {
     if (this.queryRunner === null) {
       return;
     }

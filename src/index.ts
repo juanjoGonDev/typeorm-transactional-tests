@@ -1,11 +1,6 @@
 import type { DataSource } from 'typeorm';
 import { TransactionalTestContext, type TransactionalTestLifecycle } from './lifecycle/TransactionalTestContext';
-import {
-  registerTransactionalTestHooks,
-  type RegisterTransactionalTestHooksOptions,
-  type RegisteredTransactionalTestHooks,
-  type TransactionalTestHooks
-} from './lifecycle/registerTransactionalHooks';
+import { registerTransactionalTestHooks } from './lifecycle/registerTransactionalHooks';
 
 export const createTransactionalTestContext = (dataSource: DataSource): TransactionalTestLifecycle => {
   return new TransactionalTestContext(dataSource);

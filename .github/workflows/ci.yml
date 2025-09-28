@@ -29,27 +29,26 @@ jobs:
         run: pnpm lint
 
   test:
-    name: 🗂️ ${{ matrix.database.name }}
+    name: 🗂️ ${{ matrix.target.name }}
     needs: lint
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        database:
+        target:
           - name: mysql - 8.0
-            use-service: true
-            service:
-              image: mysql:8
-              env:
-                MYSQL_ROOT_PASSWORD: test
-                MYSQL_DATABASE: test
-              ports:
-                - 3306:3306
-              options: >-
-                --health-cmd "mysqladmin ping -h 127.0.0.1 -ptest"
-                --health-interval 10s
-                --health-timeout 5s
-                --health-retries 10
+            service: |
+              {
+                "database": {
+                  "image": "mysql:8",
+                  "env": {
+                    "MYSQL_ROOT_PASSWORD": "test",
+                    "MYSQL_DATABASE": "test"
+                  },
+                  "ports": ["3306:3306"],
+                  "options": "--health-cmd=\"mysqladmin ping -h 127.0.0.1 -ptest\" --health-interval=10s --health-timeout=5s --health-retries=10"
+                }
+              }
             envScript: |
               echo "TEST_DB_TYPE=mysql" >> "$GITHUB_ENV"
               echo "TEST_MYSQL_HOST=127.0.0.1" >> "$GITHUB_ENV"
@@ -59,44 +58,45 @@ jobs:
               echo "TEST_MYSQL_DATABASE=test" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
-          - name: mariadb - 11
-            use-service: true
-            service:
-              image: mariadb:11
-              env:
-                MARIADB_ROOT_PASSWORD: test
-                MARIADB_DATABASE: test
-              ports:
-                - 3306:3306
-              options: >-
-                --health-cmd "mysqladmin ping -h 127.0.0.1 -ptest"
-                --health-interval 10s
-                --health-timeout 5s
-                --health-retries 10
+          - name: mariadb - latest
+            service: |
+              {
+                "database": {
+                  "image": "mariadb:latest",
+                  "env": {
+                    "MARIADB_ROOT_PASSWORD": "password",
+                    "MARIADB_USER": "fastypest",
+                    "MARIADB_PASSWORD": "password",
+                    "MARIADB_DATABASE": "test",
+                    "MARIADB_ROOT_HOST": "%"
+                  },
+                  "ports": ["3306:3306"],
+                  "options": "--health-cmd=\"healthcheck.sh --connect --innodb_initialized\" --health-interval=12s --health-timeout=7s --health-retries=3"
+                }
+              }
             envScript: |
               echo "TEST_DB_TYPE=mariadb" >> "$GITHUB_ENV"
               echo "TEST_MARIADB_HOST=127.0.0.1" >> "$GITHUB_ENV"
               echo "TEST_MARIADB_PORT=3306" >> "$GITHUB_ENV"
-              echo "TEST_MARIADB_USER=root" >> "$GITHUB_ENV"
-              echo "TEST_MARIADB_PASSWORD=test" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_USER=fastypest" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_PASSWORD=password" >> "$GITHUB_ENV"
               echo "TEST_MARIADB_DATABASE=test" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
           - name: postgres - 16
-            use-service: true
-            service:
-              image: postgres:16
-              env:
-                POSTGRES_USER: postgres
-                POSTGRES_PASSWORD: test
-                POSTGRES_DB: test
-              ports:
-                - 5432:5432
-              options: >-
-                --health-cmd "pg_isready -q -d $${POSTGRES_DB} -U $${POSTGRES_USER}"
-                --health-interval 10s
-                --health-timeout 5s
-                --health-retries 10
+            service: |
+              {
+                "database": {
+                  "image": "postgres:16",
+                  "env": {
+                    "POSTGRES_USER": "postgres",
+                    "POSTGRES_PASSWORD": "test",
+                    "POSTGRES_DB": "test"
+                  },
+                  "ports": ["5432:5432"],
+                  "options": "--health-cmd=\"pg_isready -q -d $${POSTGRES_DB} -U $${POSTGRES_USER}\" --health-interval=10s --health-timeout=5s --health-retries=10"
+                }
+              }
             envScript: |
               echo "TEST_DB_TYPE=postgres" >> "$GITHUB_ENV"
               echo "TEST_POSTGRES_HOST=127.0.0.1" >> "$GITHUB_ENV"
@@ -107,24 +107,21 @@ jobs:
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
           - name: sqlite - in-memory
-            use-service: false
-            service: null
+            service: '{}'
             envScript: |
               echo "TEST_DB_TYPE=sqlite" >> "$GITHUB_ENV"
               echo "TEST_SQLITE_DATABASE=:memory:" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
           - name: better-sqlite3 - file
-            use-service: false
-            service: null
+            service: '{}'
             envScript: |
               echo "TEST_DB_TYPE=better-sqlite3" >> "$GITHUB_ENV"
               echo "TEST_BETTER_SQLITE_DATABASE=.tmp/better-sqlite/test.db" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: |
               mkdir -p .tmp/better-sqlite
-    services:
-      database: ${{ matrix.database.service }}
+    services: ${{ fromJSON(matrix.target.service) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -140,10 +137,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Configure database environment
-        run: ${{ matrix.database.envScript }}
+        run: ${{ matrix.target.envScript }}
       - name: Prepare database instance
-        if: matrix.database.setupScript != ''
-        run: ${{ matrix.database.setupScript }}
+        if: matrix.target.setupScript != ''
+        run: ${{ matrix.target.setupScript }}
       - name: Run tests
         run: pnpm test
 

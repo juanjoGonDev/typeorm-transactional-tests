@@ -1,0 +1,166 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.15.4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.16.0
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+
+  test:
+    name: 🗂️ ${{ matrix.target.name }}
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: mysql - 8.0
+            service: |
+              {
+                "database": {
+                  "image": "mysql:8",
+                  "env": {
+                    "MYSQL_ROOT_PASSWORD": "test",
+                    "MYSQL_DATABASE": "test"
+                  },
+                  "ports": ["3306:3306"],
+                  "options": "--health-cmd=\"mysqladmin ping -h 127.0.0.1 -ptest\" --health-interval=10s --health-timeout=5s --health-retries=10"
+                }
+              }
+            envScript: |
+              echo "TEST_DB_TYPE=mysql" >> "$GITHUB_ENV"
+              echo "TEST_MYSQL_HOST=127.0.0.1" >> "$GITHUB_ENV"
+              echo "TEST_MYSQL_PORT=3306" >> "$GITHUB_ENV"
+              echo "TEST_MYSQL_USER=root" >> "$GITHUB_ENV"
+              echo "TEST_MYSQL_PASSWORD=test" >> "$GITHUB_ENV"
+              echo "TEST_MYSQL_DATABASE=test" >> "$GITHUB_ENV"
+              echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
+            setupScript: ""
+          - name: mariadb - latest
+            service: |
+              {
+                "database": {
+                  "image": "mariadb:latest",
+                  "env": {
+                    "MARIADB_ROOT_PASSWORD": "password",
+                    "MARIADB_USER": "fastypest",
+                    "MARIADB_PASSWORD": "password",
+                    "MARIADB_DATABASE": "test",
+                    "MARIADB_ROOT_HOST": "%"
+                  },
+                  "ports": ["3306:3306"],
+                  "options": "--health-cmd=\"healthcheck.sh --connect --innodb_initialized\" --health-interval=12s --health-timeout=7s --health-retries=3"
+                }
+              }
+            envScript: |
+              echo "TEST_DB_TYPE=mariadb" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_HOST=127.0.0.1" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_PORT=3306" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_USER=fastypest" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_PASSWORD=password" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_DATABASE=test" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_ADMIN_USER=root" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_ADMIN_PASSWORD=password" >> "$GITHUB_ENV"
+              echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
+            setupScript: ""
+          - name: postgres - 16
+            service: |
+              {
+                "database": {
+                  "image": "postgres:16",
+                  "env": {
+                    "POSTGRES_USER": "postgres",
+                    "POSTGRES_PASSWORD": "test",
+                    "POSTGRES_DB": "test"
+                  },
+                  "ports": ["5432:5432"],
+                  "options": "--health-cmd=\"pg_isready -q -d $${POSTGRES_DB} -U $${POSTGRES_USER}\" --health-interval=10s --health-timeout=5s --health-retries=10"
+                }
+              }
+            envScript: |
+              echo "TEST_DB_TYPE=postgres" >> "$GITHUB_ENV"
+              echo "TEST_POSTGRES_HOST=127.0.0.1" >> "$GITHUB_ENV"
+              echo "TEST_POSTGRES_PORT=5432" >> "$GITHUB_ENV"
+              echo "TEST_POSTGRES_USER=postgres" >> "$GITHUB_ENV"
+              echo "TEST_POSTGRES_PASSWORD=test" >> "$GITHUB_ENV"
+              echo "TEST_POSTGRES_DATABASE=test" >> "$GITHUB_ENV"
+              echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
+            setupScript: ""
+          - name: sqlite - in-memory
+            service: '{}'
+            envScript: |
+              echo "TEST_DB_TYPE=sqlite" >> "$GITHUB_ENV"
+              echo "TEST_SQLITE_DATABASE=:memory:" >> "$GITHUB_ENV"
+              echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
+            setupScript: ""
+          - name: better-sqlite3 - file
+            service: '{}'
+            envScript: |
+              echo "TEST_DB_TYPE=better-sqlite3" >> "$GITHUB_ENV"
+              echo "TEST_BETTER_SQLITE_DATABASE=.tmp/better-sqlite/test.db" >> "$GITHUB_ENV"
+              echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
+            setupScript: |
+              mkdir -p .tmp/better-sqlite
+    services: ${{ fromJSON(matrix.target.service) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.15.4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.16.0
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Configure database environment
+        run: ${{ matrix.target.envScript }}
+      - name: Prepare database instance
+        if: matrix.target.setupScript != ''
+        run: ${{ matrix.target.setupScript }}
+      - name: Run tests
+        run: pnpm test
+
+  check-all:
+    needs:
+      - lint
+      - test
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure all jobs succeeded
+        run: |
+          if [ "${{ needs.lint.result }}" != "success" ]; then
+            echo "Lint job failed"
+            exit 1
+          fi
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "Test matrix failed"
+            exit 1
+          fi
+          echo "All checks passed"

@@ -1,2 +1,5 @@
-# typeorm-transactional-tests
-TypeORM extension for running parallel tests inside transactions, ensuring isolation, no real data changes, and automatic rollback on completion
+# TypeORM Transactional Tests
+
+- [English](README.en.md)
+- [Español](README.es.md)
+- [Português](README.pt.md)

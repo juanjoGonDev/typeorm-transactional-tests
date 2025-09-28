@@ -1,6 +1,6 @@
 {
-  "name": "@typeorm-testing/transactional-tests",
-  "version": "2.0.0",
+  "name": "typeorm-test-db",
+  "version": "1.0.0",
   "description": "Automated transactional lifecycle helpers for TypeORM tests",
   "license": "GPL-3.0-only",
   "main": "dist/index.js",
@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/juanjoGonDev/typeorm-transactional-tests.git"
+    "url": "git+https://github.com/juanjoGonDev/typeorm-test-db.git"
   },
   "keywords": [
     "typeorm",

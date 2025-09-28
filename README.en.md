@@ -1,8 +1,8 @@
-# TypeORM Transactional Tests
+# TypeORM Test DB
 
 ## Overview
 
-TypeORM Transactional Tests wraps every Jest spec in an isolated database transaction. The helper accepts any initialized `DataSource`, replaces its manager during the spec, and restores the original manager after a rollback. The package targets reusable test setups that keep integration databases pristine.
+TypeORM Test DB wraps every Jest spec in an isolated database transaction. The helper accepts any initialized `DataSource`, replaces its manager during the spec, and restores the original manager after a rollback. The package targets reusable test setups that keep integration databases pristine.
 
 ## Features
 
@@ -17,7 +17,7 @@ TypeORM Transactional Tests wraps every Jest spec in an isolated database transa
 ## Installation
 
 ```bash
-pnpm add @typeorm-testing/transactional-tests
+pnpm add typeorm-test-db
 pnpm add typeorm # peer dependency example
 ```
 
@@ -30,7 +30,7 @@ Create a Jest setup file that initializes the data source and registers the tran
 ```typescript
 import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
 import { DataSource } from "typeorm";
-import { registerTransactionalTestHooks } from "@typeorm-testing/transactional-tests";
+import { registerTransactionalTestHooks } from "typeorm-test-db";
 
 const dataSource = new DataSource({
   type: "mysql",
@@ -78,4 +78,4 @@ The GitHub Actions workflow lints the source code and runs the Jest suite agains
 
 ## License
 
-TypeORM Transactional Tests is available under the GNU General Public License v3.0 or later.
+TypeORM Test DB is available under the GNU General Public License v3.0 or later.

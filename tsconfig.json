@@ -16,7 +16,7 @@
     "skipLibCheck": true,
     "baseUrl": "./src",
     "paths": {
-      "typeorm-transactional-tests": ["dist"]
+      "typeorm-test-db": ["dist"]
     }
   },
   "include": ["src", "tests"]

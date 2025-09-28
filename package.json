@@ -35,9 +35,9 @@
     "typeorm": "^0.3.17"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
+    "@jest/globals": "^30.1.2",
     "@jest/test-result": "^29.7.0",
-    "@jest/test-sequencer": "^29.7.0",
+    "@jest/test-sequencer": "^30.1.3",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.16.11",
     "@types/pg": "^8.11.11",

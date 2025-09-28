@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
-import { registerTransactionalTestHooks } from "../../dist/index";
+import { createTransactionalTestContext } from "../../dist/index";
 import { prepareTestDatabase, testDataSource } from "./test-data-source";
 
 const initializationErrorMessage =
@@ -24,12 +24,14 @@ const composeErrorMessage = (message: string, cause: Error): string => {
 };
 
 export const registerTransactionalEnvironment = (): void => {
-  registerTransactionalTestHooks({
-    dataSource: testDataSource,
-    hooks: {
-      beforeEach,
-      afterEach,
-    },
+  const lifecycle = createTransactionalTestContext(testDataSource);
+
+  beforeEach(async () => {
+    await lifecycle.init();
+  });
+
+  afterEach(async () => {
+    await lifecycle.finish();
   });
 
   beforeAll(async () => {

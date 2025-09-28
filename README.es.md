@@ -7,9 +7,9 @@ TypeORM Test DB envuelve cada spec de Jest en una transacción de base de datos 
 ## Características
 
 - Helper de ciclo de vida transaccional con hooks explícitos `init` y `finish`.
-- Registro de hooks de Jest que abre y revierte transacciones automáticamente.
+- Integración agnóstica del framework invocando el ciclo de vida dentro de los hooks del runner de pruebas.
 - Compatibilidad con MySQL, MariaDB, PostgreSQL, SQLite y Better SQLite 3.
-- Fabricas de datos deterministas impulsadas por una semilla de ejecución reproducible.
+- Fábricas de datos deterministas impulsadas por una semilla de ejecución reproducible.
 - Configuración de pruebas compartida que inicializa una única conexión por worker y ejecuta las specs en paralelo.
 - Informes de cobertura generados por defecto mediante `pnpm test`.
 - Artefactos de build generados por `pnpm build` y consumidos por Jest para simular una instalación del paquete.
@@ -30,7 +30,7 @@ Crea un archivo de configuración de Jest que inicialice la conexión y registre
 ```typescript
 import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
 import { DataSource } from "typeorm";
-import { registerTransactionalTestHooks } from "typeorm-test-db";
+import { createTransactionalTestContext } from "typeorm-test-db";
 
 const dataSource = new DataSource({
   type: "mysql",
@@ -43,12 +43,14 @@ const dataSource = new DataSource({
   entities: [],
 });
 
-registerTransactionalTestHooks({
-  dataSource,
-  hooks: {
-    beforeEach,
-    afterEach,
-  },
+const lifecycle = createTransactionalTestContext(dataSource);
+
+beforeEach(async () => {
+  await lifecycle.init();
+});
+
+afterEach(async () => {
+  await lifecycle.finish();
 });
 
 beforeAll(async () => {

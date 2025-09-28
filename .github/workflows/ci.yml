@@ -8,35 +8,56 @@ on:
     branches:
       - main
 
+env:
+  NODE_VERSION: "18.20"
+  PNPM_VERSION: "8.15.4"
+
 jobs:
-  lint:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v5
-      - name: Setup pnpm
+      - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8.15.4
-      - name: Setup Node.js
+          version: "${{ env.PNPM_VERSION }}"
+          run_install: false
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 20.16.0
+          node-version: "${{ env.NODE_VERSION }}"
           cache: pnpm
-      - name: Install dependencies
+      - name: 🛠️ Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Lint
+      - name: ⌛ Run build
+        run: pnpm build
+      - name: 🎨 Run lint
         run: pnpm lint
+      - name: 🧪 Install package test
+        run: |
+          TEST_DIR="test-install"
+          mkdir "$TEST_DIR"
+          pnpm pack --pack-destination "$TEST_DIR"
+          cd "$TEST_DIR"
+          echo "📦 Creating package.json..."
+          echo '{"name":"test-package","version":"1.0.0","private":true}' > package.json
+          PACKAGE_TARBALL=$(find . -maxdepth 1 -name '*.tgz' -print -quit)
+          echo "📦 Found package: $PACKAGE_TARBALL"
+          echo "🔍 Current directory structure:"
+          ls -la
+          echo "📥 Installing package..."
+          pnpm add --save-dev "$PACKAGE_TARBALL"
 
-  test:
+  test-ci:
     name: 🗂️ ${{ matrix.target.name }}
-    needs: lint
+    needs: build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         target:
-          - name: mysql - 8.0
+          - name: 📦 mysql - 8.0
             service: |
               {
                 "database": {
@@ -58,7 +79,7 @@ jobs:
               echo "TEST_MYSQL_DATABASE=test" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
-          - name: mariadb - latest
+          - name: 📦 mariadb - latest
             service: |
               {
                 "database": {
@@ -85,7 +106,7 @@ jobs:
               echo "TEST_MARIADB_ADMIN_PASSWORD=password" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
-          - name: postgres - 16
+          - name: 📦 postgres - 16
             service: |
               {
                 "database": {
@@ -108,15 +129,15 @@ jobs:
               echo "TEST_POSTGRES_DATABASE=test" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
-          - name: sqlite - in-memory
-            service: '{}'
+          - name: 📦 sqlite - in-memory
+            service: "{}"
             envScript: |
               echo "TEST_DB_TYPE=sqlite" >> "$GITHUB_ENV"
               echo "TEST_SQLITE_DATABASE=:memory:" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
-          - name: better-sqlite3 - file
-            service: '{}'
+          - name: 📦 better-sqlite3 - file
+            service: "{}"
             envScript: |
               echo "TEST_DB_TYPE=better-sqlite3" >> "$GITHUB_ENV"
               echo "TEST_BETTER_SQLITE_DATABASE=.tmp/better-sqlite/test.db" >> "$GITHUB_ENV"
@@ -125,41 +146,43 @@ jobs:
               mkdir -p .tmp/better-sqlite
     services: ${{ fromJSON(matrix.target.service) }}
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v5
-      - name: Setup pnpm
+      - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 8.15.4
-      - name: Setup Node.js
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v5
         with:
           node-version: 20.16.0
           cache: pnpm
-      - name: Install dependencies
+      - name: 🛠️ Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Configure database environment
+      - name: 🚧 Build package
+        run: pnpm build
+      - name: 🔧 Configure database environment
         run: ${{ matrix.target.envScript }}
-      - name: Prepare database instance
+      - name: 🚧 Prepare database instance
         if: matrix.target.setupScript != ''
         run: ${{ matrix.target.setupScript }}
-      - name: Run tests
-        run: pnpm test
+      - name: 🧪 Run tests
+        run: pnpm test:ci
 
   check-all:
     needs:
-      - lint
-      - test
+      - build
+      - test-ci
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-      - name: Ensure all jobs succeeded
+      - name: ✅ Ensure all jobs succeeded
         run: |
-          if [ "${{ needs.lint.result }}" != "success" ]; then
+          if [ "${{ needs.build.result }}" != "success" ]; then
             echo "Lint job failed"
             exit 1
           fi
-          if [ "${{ needs.test.result }}" != "success" ]; then
+          if [ "${{ needs.test-ci.result }}" != "success" ]; then
             echo "Test matrix failed"
             exit 1
           fi

@@ -1,6 +1,6 @@
-import { DataSource } from 'typeorm';
-import { resolveTestDatabaseConfiguration } from '../config/database';
-import { testEntities } from '../../src/testing/entities';
+import { DataSource } from "typeorm";
+import { resolveTestDatabaseConfiguration } from "../config/database";
+import { testEntities } from "../entities";
 
 const configuration = resolveTestDatabaseConfiguration(testEntities);
 

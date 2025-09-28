@@ -1,16 +1,12 @@
-import { randomUUID } from 'crypto';
-import type { DataSource } from 'typeorm';
-import { orderStatuses, paymentStatuses } from '../../src/testing/entities/defaults';
-import { Order } from '../../src/testing/entities/Order.entity';
-import { OrderItem } from '../../src/testing/entities/OrderItem.entity';
-import { Payment } from '../../src/testing/entities/Payment.entity';
-import { Product } from '../../src/testing/entities/Product.entity';
-import { User } from '../../src/testing/entities/User.entity';
+import { randomUUID } from "crypto";
+import type { DataSource } from "typeorm";
+import { Order, User, Product, Payment, OrderItem } from "../entities";
+import { orderStatuses, paymentStatuses } from "../entities/defaults";
 
-const userNotFoundMessage = 'User not found for email';
-const productNotFoundMessage = 'Product not found for sku';
-const insufficientInventoryMessage = 'Insufficient inventory for sku';
-const paymentReferencePrefix = 'txn_service_';
+const userNotFoundMessage = "User not found for email";
+const productNotFoundMessage = "Product not found for sku";
+const insufficientInventoryMessage = "Insufficient inventory for sku";
+const paymentReferencePrefix = "txn_service_";
 const currencyFractionDigits = 2;
 
 export interface OrderCreationItem {
@@ -38,7 +34,9 @@ export class TransactionalOrderService {
       const orderRepository = manager.getRepository(Order);
       const paymentRepository = manager.getRepository(Payment);
 
-      const user = await userRepository.findOne({ where: { email: input.userEmail } });
+      const user = await userRepository.findOne({
+        where: { email: input.userEmail },
+      });
       if (user === null) {
         throw new Error(`${userNotFoundMessage}: ${input.userEmail}`);
       }
@@ -48,7 +46,9 @@ export class TransactionalOrderService {
       const updatedProducts: Product[] = [];
 
       for (const item of input.items) {
-        const product = await productRepository.findOne({ where: { sku: item.sku } });
+        const product = await productRepository.findOne({
+          where: { sku: item.sku },
+        });
         if (product === null) {
           throw new Error(`${productNotFoundMessage}: ${item.sku}`);
         }
@@ -61,7 +61,7 @@ export class TransactionalOrderService {
         const orderItem = manager.create(OrderItem, {
           quantity: item.quantity,
           unitPrice: product.price,
-          product
+          product,
         });
         orderItems.push(orderItem);
         updatedProducts.push(product);
@@ -73,7 +73,7 @@ export class TransactionalOrderService {
       const order = orderRepository.create({
         status: orderStatuses.created,
         total,
-        user
+        user,
       });
       order.items = orderItems.map((item) => {
         item.order = order;
@@ -84,7 +84,7 @@ export class TransactionalOrderService {
         transactionReference: `${paymentReferencePrefix}${randomUUID()}`,
         status: paymentStatuses.pending,
         amount: total,
-        processedAt: new Date()
+        processedAt: new Date(),
       });
       const savedOrder = await orderRepository.save(order);
       payment.order = savedOrder;

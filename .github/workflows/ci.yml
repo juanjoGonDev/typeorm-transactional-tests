@@ -81,6 +81,8 @@ jobs:
               echo "TEST_MARIADB_USER=fastypest" >> "$GITHUB_ENV"
               echo "TEST_MARIADB_PASSWORD=password" >> "$GITHUB_ENV"
               echo "TEST_MARIADB_DATABASE=test" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_ADMIN_USER=root" >> "$GITHUB_ENV"
+              echo "TEST_MARIADB_ADMIN_PASSWORD=password" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
           - name: postgres - 16

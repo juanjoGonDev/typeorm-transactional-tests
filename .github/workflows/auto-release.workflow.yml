@@ -110,7 +110,7 @@ jobs:
           pnpm pack --pack-destination "$TEST_DIR"
           cd "$TEST_DIR"
           echo "📦 Creating package.json..."
-          pnpm init -y
+          echo '{"name":"test-package","version":"1.0.0","private":true}' > package.json
           PACKAGE_TARBALL=$(find . -maxdepth 1 -name '*.tgz' -print -quit)
           echo "📦 Found package: $PACKAGE_TARBALL"
           echo "🔍 Current directory structure:"

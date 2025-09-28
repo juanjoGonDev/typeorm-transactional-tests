@@ -1,0 +1,89 @@
+name: 🤖 Dependabot auto-merge
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  approve-release:
+    runs-on: ubuntu-latest
+    if: >
+      contains(github.event.pull_request.labels.*.name, 'auto-release') && 
+      github.event.pull_request.head.repo.full_name == github.repository && 
+      github.event.pull_request.user.login == github.repository_owner
+    environment: admin
+    steps:
+      - name: 🔎 Check is approved
+        id: check-is-approved
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            const reviews = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            const alreadyApproved = reviews.data.some(review => review.state === 'APPROVED');
+            return alreadyApproved;
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: ✅ Approve PR
+        if: steps.check-is-approved.outputs.result == 'false'
+        run: gh pr review $PR_URL --approve -b "I'm **approving** this pull request because **it includes a bump of the version**"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  dependabot:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.pull_request.user.login == 'dependabot[bot]' && 
+      github.event.pull_request.head.repo.full_name == github.repository
+    environment: admin
+    steps:
+      - name: Fetch actor username
+        id: get_actor_username
+        run: echo "ACTOR_USERNAME=$(gh api user -q .login)" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{secrets.PAT_FINE}}
+      - name: 💿 Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2.4.0
+        with:
+          github-token: "${{secrets.GITHUB_TOKEN}}"
+      - name: ✅ Approve PR if eligible
+        id: approve
+        run: |
+          approved=false
+          if [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-patch" || "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-minor" ]]; then
+            gh pr review "$PR_URL" --approve -b "I'm **approving** this pull request because **it includes a patch or minor update**"
+            approved=true
+          elif [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-major" && "${{ steps.metadata.outputs.dependency-type }}" == "direct:development" ]]; then
+            gh pr review "$PR_URL" --approve -b "I'm **approving** this pull request because **it includes a major update of a dependency used only in development**"
+            approved=true
+          fi
+          echo "approved=$approved" >> $GITHUB_OUTPUT
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.PAT_FINE}}
+      - name: 🔓 Enable auto-merge for eligible PRs
+        if: steps.approve.outputs.approved == 'true'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v5
+      - name: 👤 Assign PR to user
+        run: gh pr edit $PR_URL --add-assignee "${{ env.ACTOR_USERNAME }}"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.PAT_FINE}}
+      - name: 💬 Comment on major updates of non-development dependencies
+        if: ${{steps.metadata.outputs.update-type == 'version-update:semver-major' && steps.metadata.outputs.dependency-type == 'direct:production'}}
+        run: |
+          gh pr comment $PR_URL --body "I'm **not approving** this PR because **it includes a major update of a dependency used in production**"
+          gh pr edit $PR_URL --add-label "requires-manual-qa"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

@@ -52,7 +52,7 @@ jobs:
           mkdir "$TEST_DIR"
           pnpm pack --pack-destination "$TEST_DIR"
           cd "$TEST_DIR"
-          pnpm init --yes
+          pnpm init -y
           PACKAGE_TARBALL=$(find . -maxdepth 1 -name '*.tgz' -print -quit)
           pnpm add --save-dev "$PACKAGE_TARBALL"
       - name: 🎉 Publish to npm

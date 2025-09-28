@@ -96,6 +96,7 @@ jobs:
         with:
           node-version: "${{ env.NODE_VERSION }}"
           cache: pnpm
+          registry-url: "https://registry.npmjs.org"
       - name: ⚙️ Install dependencies
         if: steps.check_commits.outputs.enough_commits == 'true'
         run: pnpm install --frozen-lockfile

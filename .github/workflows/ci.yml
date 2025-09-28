@@ -1,19 +1,26 @@
 name: CI
 
+permissions:
+  contents: read
+
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
+    types: [opened, reopened, ready_for_review, synchronize]
 
 env:
   NODE_VERSION: "18.20"
   PNPM_VERSION: "8.15.4"
 
+concurrency:
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    name: 📦 Build
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout repository
@@ -57,7 +64,7 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - name: 📦 mysql - 8.0
+          - name: mysql - 8.0
             service: |
               {
                 "database": {
@@ -79,7 +86,7 @@ jobs:
               echo "TEST_MYSQL_DATABASE=test" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
-          - name: 📦 mariadb - latest
+          - name: mariadb - latest
             service: |
               {
                 "database": {
@@ -106,7 +113,7 @@ jobs:
               echo "TEST_MARIADB_ADMIN_PASSWORD=password" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
-          - name: 📦 postgres - 16
+          - name: postgres - 16
             service: |
               {
                 "database": {
@@ -129,14 +136,14 @@ jobs:
               echo "TEST_POSTGRES_DATABASE=test" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
-          - name: 📦 sqlite - in-memory
+          - name: sqlite - in-memory
             service: "{}"
             envScript: |
               echo "TEST_DB_TYPE=sqlite" >> "$GITHUB_ENV"
               echo "TEST_SQLITE_DATABASE=:memory:" >> "$GITHUB_ENV"
               echo "TEST_SEED=$GITHUB_RUN_ID" >> "$GITHUB_ENV"
             setupScript: ""
-          - name: 📦 better-sqlite3 - file
+          - name: better-sqlite3 - file
             service: "{}"
             envScript: |
               echo "TEST_DB_TYPE=better-sqlite3" >> "$GITHUB_ENV"

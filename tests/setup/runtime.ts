@@ -1,17 +1,19 @@
-import { afterAll, afterEach, beforeAll, beforeEach } from '@jest/globals';
-import { registerTransactionalTestHooks } from 'typeorm-transactional-tests';
-import { prepareTestDatabase, testDataSource } from './test-data-source';
+import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
+import { registerTransactionalTestHooks } from "../../dist/index";
+import { prepareTestDatabase, testDataSource } from "./test-data-source";
 
-const initializationErrorMessage = 'Failed to initialize the shared test data source.';
-const destructionErrorMessage = 'Failed to destroy the shared test data source.';
-const fallbackErrorMessage = 'Unknown error';
-const causePrefix = 'Cause: ';
-const detailSeparator = ' ';
+const initializationErrorMessage =
+  "Failed to initialize the shared test data source.";
+const destructionErrorMessage =
+  "Failed to destroy the shared test data source.";
+const fallbackErrorMessage = "Unknown error";
+const causePrefix = "Cause: ";
+const detailSeparator = " ";
 const toError = (value: unknown): Error => {
   if (value instanceof Error) {
     return value;
   }
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return new Error(value);
   }
   return new Error(fallbackErrorMessage);
@@ -26,8 +28,8 @@ export const registerTransactionalEnvironment = (): void => {
     dataSource: testDataSource,
     hooks: {
       beforeEach,
-      afterEach
-    }
+      afterEach,
+    },
   });
 
   beforeAll(async () => {
@@ -37,7 +39,9 @@ export const registerTransactionalEnvironment = (): void => {
         await testDataSource.initialize();
       }
     } catch (error) {
-      throw new Error(composeErrorMessage(initializationErrorMessage, toError(error)));
+      throw new Error(
+        composeErrorMessage(initializationErrorMessage, toError(error))
+      );
     }
   });
 
@@ -47,7 +51,9 @@ export const registerTransactionalEnvironment = (): void => {
         await testDataSource.destroy();
       }
     } catch (error) {
-      throw new Error(composeErrorMessage(destructionErrorMessage, toError(error)));
+      throw new Error(
+        composeErrorMessage(destructionErrorMessage, toError(error))
+      );
     }
   });
 };

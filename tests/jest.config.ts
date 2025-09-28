@@ -3,14 +3,14 @@ import type { Config } from "jest";
 const config: Config = {
   preset: "ts-jest",
   testEnvironment: "node",
-  roots: ["<rootDir>/tests"],
+  roots: ["."],
   testRegex: "^.+\\.(test|spec)\\.ts$",
   moduleFileExtensions: ["ts", "js"],
-  setupFilesAfterEnv: ["<rootDir>/tests/setup/environment.ts"],
+  setupFilesAfterEnv: ["./setup/environment.ts"],
   collectCoverage: true,
   collectCoverageFrom: ["src/**/*.ts"],
   coverageDirectory: "coverage",
-  testSequencer: "<rootDir>/tests/setup/test-sequencer.js",
+  testSequencer: "./setup/test-sequencer.js",
   moduleNameMapper: {
     ["^typeorm-transactional-tests$"]: "<rootDir>/dist",
   },

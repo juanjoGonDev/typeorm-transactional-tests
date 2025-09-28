@@ -146,13 +146,7 @@ jobs:
             STRATEGY=${{ github.event.inputs.strategy }}
           fi
 
-          # Ensure git config is still set
-          git config --global url."https://${{ secrets.PAT_FINE }}@github.com/".insteadOf "https://github.com/"
-
-          # Run release
           pnpm release --release-as $STRATEGY
-
-          # Push changes
           git push --follow-tags origin release/${{ github.run_number }}
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_FINE }}

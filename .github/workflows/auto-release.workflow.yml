@@ -84,18 +84,18 @@ jobs:
           echo "ACTOR_USERNAME=${USER_LOGIN}" >> $GITHUB_ENV
           git config --global user.name "$USER_LOGIN"
           git config --global user.email "$USER_EMAIL"
-      - name: 🟢 Setup Node.js
-        if: steps.check_commits.outputs.enough_commits == 'true'
-        uses: actions/setup-node@v5
-        with:
-          node-version: "${{ env.NODE_VERSION }}"
-          registry-url: "https://registry.npmjs.org/"
       - name: 📦 Setup pnpm
         if: steps.check_commits.outputs.enough_commits == 'true'
         uses: pnpm/action-setup@v4
         with:
           version: "${{ env.PNPM_VERSION }}"
           run_install: false
+      - name: 🟢 Setup Node.js
+        if: steps.check_commits.outputs.enough_commits == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: "${{ env.NODE_VERSION }}"
+          cache: pnpm
       - name: ⚙️ Install dependencies
         if: steps.check_commits.outputs.enough_commits == 'true'
         run: pnpm install --frozen-lockfile

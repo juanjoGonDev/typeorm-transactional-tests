@@ -1,3 +1,5 @@
+import { promises as fs } from 'fs';
+import { dirname, extname, join, basename } from 'path';
 import { createPool } from 'mysql2/promise';
 import { Client } from 'pg';
 import type { DataSourceOptions } from 'typeorm';
@@ -32,14 +34,18 @@ const environmentVariableNames = {
     port: 'TEST_MYSQL_PORT',
     username: 'TEST_MYSQL_USER',
     password: 'TEST_MYSQL_PASSWORD',
-    database: 'TEST_MYSQL_DATABASE'
+    database: 'TEST_MYSQL_DATABASE',
+    adminUsername: 'TEST_MYSQL_ADMIN_USER',
+    adminPassword: 'TEST_MYSQL_ADMIN_PASSWORD'
   },
   mariadb: {
     host: 'TEST_MARIADB_HOST',
     port: 'TEST_MARIADB_PORT',
     username: 'TEST_MARIADB_USER',
     password: 'TEST_MARIADB_PASSWORD',
-    database: 'TEST_MARIADB_DATABASE'
+    database: 'TEST_MARIADB_DATABASE',
+    adminUsername: 'TEST_MARIADB_ADMIN_USER',
+    adminPassword: 'TEST_MARIADB_ADMIN_PASSWORD'
   },
   postgres: {
     host: 'TEST_POSTGRES_HOST',
@@ -105,6 +111,11 @@ type MysqlLikeDefaults = {
 
 type MysqlLikeEnv = typeof environmentVariableNames.mysql | typeof environmentVariableNames.mariadb;
 
+type MysqlLikeAdminCredentials = {
+  readonly username: string;
+  readonly password: string;
+};
+
 type DatabasePreparation = () => Promise<void>;
 
 interface TestDatabaseConfiguration {
@@ -160,6 +171,19 @@ const sanitizeWorkerId = (value: string | undefined): string => {
 const buildWorkerAwareName = (base: string): string => {
   const workerId = sanitizeWorkerId(process.env[workerEnvironmentVariable]);
   return `${base}${identifierSeparator}${workerLabelPrefix}${workerId}`;
+};
+
+const deriveWorkerAwareFile = (filePath: string): string => {
+  if (filePath === sqliteDefaults.database) {
+    return filePath;
+  }
+
+  const workerId = sanitizeWorkerId(process.env[workerEnvironmentVariable]);
+  const directory = dirname(filePath);
+  const extension = extname(filePath);
+  const baseName = basename(filePath, extension);
+  const workerAwareName = `${baseName}${identifierSeparator}${workerLabelPrefix}${workerId}`;
+  return join(directory, extension === '' ? workerAwareName : `${workerAwareName}${extension}`);
 };
 
 const formatMysqlIdentifier = (identifier: string): string => {
@@ -228,21 +252,40 @@ const buildSqliteOptions = (entities: EntityCollection): DataSourceOptions => {
 
 const buildBetterSqliteOptions = (entities: EntityCollection): DataSourceOptions => {
   const env = process.env;
+  const configuredPath = env[environmentVariableNames.betterSqlite.database] ?? sqliteDefaults.database;
+  const database = deriveWorkerAwareFile(configuredPath);
+
   return {
     type: 'better-sqlite3',
-    database: env[environmentVariableNames.betterSqlite.database] ?? sqliteDefaults.database,
+    database,
     entities: toEntityList(entities),
     ...schemaSynchronization
   };
 };
 
-const createMysqlPreparation = (options: MysqlLikeOptions): DatabasePreparation => {
+const resolveMysqlAdminCredentials = (
+  envNames: MysqlLikeEnv,
+  defaults: MysqlLikeDefaults,
+  env: NodeJS.ProcessEnv
+): MysqlLikeAdminCredentials => {
+  const username = env[envNames.adminUsername] ?? defaults.username;
+  const password = env[envNames.adminPassword] ?? defaults.password;
+  return { username, password };
+};
+
+const createMysqlPreparation = (
+  options: MysqlLikeOptions,
+  envNames: MysqlLikeEnv,
+  defaults: MysqlLikeDefaults
+): DatabasePreparation => {
   return async () => {
+    const env = process.env;
+    const adminCredentials = resolveMysqlAdminCredentials(envNames, defaults, env);
     const pool = createPool({
-      host: options.host,
-      port: options.port,
-      user: options.username,
-      password: options.password,
+      host: env[envNames.host] ?? defaults.host,
+      port: readInteger(env[envNames.port], defaults.port),
+      user: adminCredentials.username,
+      password: adminCredentials.password,
       waitForConnections: true,
       connectionLimit: 1,
       queueLimit: 0
@@ -278,17 +321,27 @@ const createPostgresPreparation = (options: PostgresOptions): DatabasePreparatio
   };
 };
 
+const createBetterSqlitePreparation = (databasePath: string): DatabasePreparation => {
+  if (databasePath === sqliteDefaults.database) {
+    return prepareNoop;
+  }
+
+  return async () => {
+    await fs.mkdir(dirname(databasePath), { recursive: true });
+  };
+};
+
 const createTestDatabaseConfiguration = (entities: EntityCollection): TestDatabaseConfiguration => {
   const driver = normalizeDriver(process.env[environmentVariableNames.type]);
 
   if (driver === driverNames.mysql) {
     const options = buildMysqlLikeOptions(entities, mysqlDefaults, environmentVariableNames.mysql, driverNames.mysql);
-    return { options, prepare: createMysqlPreparation(options) };
+    return { options, prepare: createMysqlPreparation(options, environmentVariableNames.mysql, mysqlDefaults) };
   }
 
   if (driver === driverNames.mariadb) {
     const options = buildMysqlLikeOptions(entities, mariadbDefaults, environmentVariableNames.mariadb, driverNames.mariadb);
-    return { options, prepare: createMysqlPreparation(options) };
+    return { options, prepare: createMysqlPreparation(options, environmentVariableNames.mariadb, mariadbDefaults) };
   }
 
   if (driver === driverNames.postgres) {
@@ -297,7 +350,8 @@ const createTestDatabaseConfiguration = (entities: EntityCollection): TestDataba
   }
 
   if (driver === driverNames.betterSqlite) {
-    return { options: buildBetterSqliteOptions(entities), prepare: prepareNoop };
+    const options = buildBetterSqliteOptions(entities);
+    return { options, prepare: createBetterSqlitePreparation(options.database as string) };
   }
 
   return { options: buildSqliteOptions(entities), prepare: prepareNoop };

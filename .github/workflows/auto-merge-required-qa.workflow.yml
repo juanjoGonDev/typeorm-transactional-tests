@@ -1,0 +1,159 @@
+name: 🔄 PRs Required QA Auto-Merge
+
+on:
+  schedule:
+    - cron: "0 8 * * 6"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Do not actually merge, just simulate (for testing)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+run-name: 🔄 PRs Required QA Auto-Merge${{ github.event.inputs.dry_run == 'true' && ' (dry)' || '' }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge-required-qa:
+    name: Auto merge required QA${{ github.event.inputs.dry_run == 'true' && ' (dry)' || '' }}
+    runs-on: ubuntu-latest
+    environment: admin
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v5
+
+      - name: 🔍 Search PRs requires-manual-qa
+        id: search_prs
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            // Filter by label, dependabot and base main
+            const filtered = prs.data.filter(pr =>
+              pr.labels.some(l => l.name === 'requires-manual-qa') &&
+              pr.user.login === 'dependabot[bot]' &&
+              pr.base.ref === 'main' &&
+              pr.head.repo.full_name === `${context.repo.owner}/${context.repo.repo}`
+            );
+            return filtered.map(pr => pr.number);
+
+      - name: 🤖 Process PRs
+        if: steps.search_prs.outputs.result != '[]'
+        uses: actions/github-script@v8
+        env:
+          dry_run: ${{ github.event.inputs.dry_run }}
+          GH_TOKEN: ${{ secrets.PAT_FINE }}
+        with:
+          github-token: ${{ secrets.PAT_FINE }}
+          script: |
+            const dryRun = process.env.dry_run === 'true';
+            console.log(`Dry run mode: ${dryRun}`);
+
+            let prNumbers = ${{ steps.search_prs.outputs.result }};
+            if (typeof prNumbers === 'string') {
+              try {
+                prNumbers = JSON.parse(prNumbers);
+              } catch {
+                prNumbers = [];
+              }
+            }
+            const results = [];
+
+            for (const prNumber of prNumbers) {
+              console.log(`PR #${prNumber}: Processing...`);
+
+              let pr = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber
+              });
+
+              // 1. Check if approved
+
+              console.log(`PR #${prNumber}: Checking if  is approved...`);
+              const reviews = await github.rest.pulls.listReviews({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber
+              });
+
+              const approved = reviews.data.some(r => r.state === 'APPROVED');
+              if (!approved) {
+                console.log(`PR #${prNumber}: is NOT approved.`);
+                results.push({prNumber, merged: false, reason: 'No approved'});
+                continue;
+              }
+              console.log(`PR #${prNumber}: is approved.`);
+
+              // 2. Enable auto-merge
+              if (!dryRun) {
+                try {
+                  const result = await github.graphql(`
+                    mutation EnableAutoMerge($pullRequestId: ID!) {
+                      enablePullRequestAutoMerge(input: {
+                        pullRequestId: $pullRequestId,
+                        mergeMethod: SQUASH
+                      }) {
+                        pullRequest {
+                          number
+                          autoMergeRequest {
+                            enabledAt
+                            enabledBy {
+                              login
+                            }
+                          }
+                        }
+                      }
+                    }
+                  `, {
+                    pullRequestId: pr.data.node_id,
+                    headers: {
+                      Authorization: `token ${process.env.GH_TOKEN}`
+                    }
+                  });
+
+                  console.log(`PR #${prNumber}: Auto-merge enabled.`);
+                  results.push({ prNumber, merged: true, reason: 'Auto-merge enabled' });
+                } catch (e) {
+                  console.log(`PR #${prNumber}: Auto-merge failed: ${e.message}`);
+                  results.push({ prNumber, merged: false, reason: 'Auto-merge failed: ' + e.message });
+                }
+              } else {
+                console.log(`PR #${prNumber}: Dry run, auto-merge skipped.`);
+                results.push({ prNumber, merged: false, reason: 'Dry run: auto-merge skipped' });
+              }
+
+              // 3. Updated with main
+              let updated = pr.data.mergeable_state === 'clean';
+
+              if (!updated) {
+                console.log(`PR #${prNumber}: is NOT up-to-date. Attempting to update...`);
+                try {
+                  await github.rest.pulls.updateBranch({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: prNumber
+                  });
+                  console.log(`PR #${prNumber}: update triggered.`);
+                } catch (e) {
+                  console.log(`PR #${prNumber}: update FAILED: ${e.message}`);
+                  results.push({prNumber, merged: false, reason: 'Could not update branch: ' + e.message});
+                  continue;
+                }
+              }
+            }
+            console.table(results);
+            return results;

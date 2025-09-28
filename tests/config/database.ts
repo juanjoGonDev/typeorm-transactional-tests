@@ -1,7 +1,7 @@
 import { createPool } from 'mysql2/promise';
 import { Client } from 'pg';
 import type { DataSourceOptions } from 'typeorm';
-import type { EntityDefinitionList } from '../shared/entity-definition';
+import type { EntityDefinitionList } from '../../src/testing/entity-definition';
 
 const supportedDriverTypes = ['mysql', 'mariadb', 'postgres', 'sqlite', 'better-sqlite3'] as const;
 

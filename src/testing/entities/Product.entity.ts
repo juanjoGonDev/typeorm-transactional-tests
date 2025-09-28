@@ -25,9 +25,9 @@ export class Product {
   @Column({ type: integerColumnType, default: inventoryDefault })
   public inventoryCount!: number;
 
-  @ManyToOne(() => Category, (category) => category.products, { eager: true })
+  @ManyToOne(() => Category, (category: Category) => category.products, { eager: true })
   public category!: Category;
 
-  @OneToMany(() => OrderItem, (item) => item.product)
+  @OneToMany(() => OrderItem, (item: OrderItem) => item.product)
   public items!: OrderItem[];
 }

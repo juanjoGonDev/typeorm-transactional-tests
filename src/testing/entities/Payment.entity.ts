@@ -4,7 +4,6 @@ import { paymentStatuses } from './defaults';
 import { Order } from './Order.entity';
 
 const decimalColumnType = 'decimal';
-const dateTimeColumnType = 'datetime';
 
 @Entity({ name: tableNames.payment })
 export class Payment {
@@ -23,10 +22,10 @@ export class Payment {
   @Column({ type: decimalColumnType, precision: decimalConfig.pricePrecision, scale: decimalConfig.priceScale })
   public amount!: string;
 
-  @Column({ type: dateTimeColumnType })
+  @Column()
   public processedAt!: Date;
 
-  @OneToOne(() => Order, (order) => order.payment)
+  @OneToOne(() => Order, (order: Order) => order.payment)
   @JoinColumn()
   public order!: Order;
 }

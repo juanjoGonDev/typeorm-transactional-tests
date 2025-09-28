@@ -15,7 +15,7 @@ export class Profile {
   @Column({ type: dateColumnType })
   public birthDate!: Date;
 
-  @OneToOne(() => User, (user) => user.profile)
+  @OneToOne(() => User, (user: User) => user.profile)
   @JoinColumn()
   public user!: User;
 }

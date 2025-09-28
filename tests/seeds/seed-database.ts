@@ -1,5 +1,5 @@
 import type { EntityManager } from 'typeorm';
-import { Address, Category, Product, Profile, User } from '../entities';
+import { Address, Category, Product, Profile, User } from '../../src/testing/entities';
 import { seedEnvironment } from './seed-configuration';
 import { buildSeedDataset } from './random-data';
 import type { SeedDataset } from './types';

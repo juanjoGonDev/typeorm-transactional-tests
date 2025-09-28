@@ -1,11 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
 import { In } from 'typeorm';
-import { paymentStatuses } from './entities/defaults';
+import { paymentStatuses } from '../src/testing/entities/defaults';
 import { fixedProducts, fixedUsers } from './seeds/fixed-data';
 import { seedDatabase } from './seeds';
 import { testDataSource } from './setup';
 import { TransactionalOrderService } from './services/order-service';
-import { Product } from './entities/Product.entity';
+import { Product } from '../src/testing/entities/Product.entity';
 
 const suiteTitle = 'Transactional order service';
 const providerName = 'service-stripe';

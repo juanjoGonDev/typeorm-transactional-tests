@@ -29,12 +29,12 @@ export class Order {
   @CreateDateColumn()
   public placedAt!: Date;
 
-  @ManyToOne(() => User, (user) => user.orders, { nullable: false })
+  @ManyToOne(() => User, (user: User) => user.orders, { nullable: false })
   public user!: User;
 
-  @OneToMany(() => OrderItem, (item) => item.order, { cascade: ['insert'] })
+  @OneToMany(() => OrderItem, (item: OrderItem) => item.order, { cascade: ['insert'] })
   public items!: OrderItem[];
 
-  @OneToOne(() => Payment, (payment) => payment.order)
+  @OneToOne(() => Payment, (payment: Payment) => payment.order)
   public payment!: Payment;
 }

@@ -19,9 +19,9 @@ export class OrderItem {
   @Column({ type: decimalColumnType, precision: decimalConfig.pricePrecision, scale: decimalConfig.priceScale })
   public unitPrice!: string;
 
-  @ManyToOne(() => Order, (order) => order.items, { onDelete: cascadeDelete })
+  @ManyToOne(() => Order, (order: Order) => order.items, { onDelete: cascadeDelete })
   public order!: Order;
 
-  @ManyToOne(() => Product, (product) => product.items, { eager: true })
+  @ManyToOne(() => Product, (product: Product) => product.items, { eager: true })
   public product!: Product;
 }

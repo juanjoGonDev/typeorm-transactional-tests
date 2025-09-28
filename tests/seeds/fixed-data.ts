@@ -1,4 +1,4 @@
-import { userStatuses } from '../entities/defaults';
+import { userStatuses } from '../../src/testing/entities/defaults';
 import type { CategorySeed, ProductSeed, UserSeed } from './types';
 
 const adaEmail = 'ada.lovelace@example.com';

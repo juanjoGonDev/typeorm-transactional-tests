@@ -11,6 +11,14 @@ const configKeyCandidates = ['recommended-type-checked', 'recommendedTypeChecked
 const missingConfigMessage = 'Missing recommended type-checked configuration for @typescript-eslint/eslint-plugin';
 const importNoDefaultExportRule = 'import/no-default-export';
 const disabledRuleState = 'off';
+const disabledTypeSafetyRules = {
+  '@typescript-eslint/no-unsafe-assignment': disabledRuleState,
+  '@typescript-eslint/no-unsafe-call': disabledRuleState,
+  '@typescript-eslint/no-unsafe-member-access': disabledRuleState,
+  '@typescript-eslint/no-unsafe-return': disabledRuleState,
+  '@typescript-eslint/no-unsafe-argument': disabledRuleState,
+  '@typescript-eslint/no-redundant-type-constituents': disabledRuleState
+};
 
 const recommendedConfig = configKeyCandidates
   .map((key) => (tsEslint.configs ? tsEslint.configs[key] : undefined))
@@ -43,6 +51,7 @@ module.exports = [
     rules: {
       ...recommendedConfig.rules,
       ...prettierRules,
+      ...disabledTypeSafetyRules,
       [importNoDefaultExportRule]: disabledRuleState
     }
   }

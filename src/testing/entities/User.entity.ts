@@ -29,13 +29,13 @@ export class User {
   @Column({ length: columnLengths.status, default: userStatuses.active })
   public status!: string;
 
-  @OneToOne(() => Profile, (profile) => profile.user, { cascade: true })
+  @OneToOne(() => Profile, (profile: Profile) => profile.user, { cascade: true })
   public profile!: Profile;
 
-  @OneToMany(() => Address, (address) => address.user, { cascade: ['insert', 'update'] })
+  @OneToMany(() => Address, (address: Address) => address.user, { cascade: ['insert', 'update'] })
   public addresses!: Address[];
 
-  @OneToMany(() => Order, (order) => order.user)
+  @OneToMany(() => Order, (order: Order) => order.user)
   public orders!: Order[];
 
   @Column({ default: booleanDefaults.marketingOptIn })

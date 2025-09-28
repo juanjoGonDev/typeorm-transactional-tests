@@ -25,6 +25,6 @@ export class Address {
   @Column({ default: booleanDefaults.addressPrimary })
   public isPrimary!: boolean;
 
-  @ManyToOne(() => User, (user) => user.addresses, { onDelete: cascadeDelete })
+  @ManyToOne(() => User, (user: User) => user.addresses, { onDelete: cascadeDelete })
   public user!: User;
 }

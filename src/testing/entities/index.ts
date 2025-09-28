@@ -1,4 +1,4 @@
-import type { EntityDefinition } from '../shared/entity-definition';
+import type { EntityDefinition } from '../entity-definition';
 import { Address } from './Address.entity';
 import { Category } from './Category.entity';
 import { Order } from './Order.entity';

@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
-import { userStatuses } from './entities/defaults';
-import { Address } from './entities/Address.entity';
-import { Profile } from './entities/Profile.entity';
-import { User } from './entities/User.entity';
+import { userStatuses } from '../src/testing/entities/defaults';
+import { Address } from '../src/testing/entities/Address.entity';
+import { Profile } from '../src/testing/entities/Profile.entity';
+import { User } from '../src/testing/entities/User.entity';
 import { seedDatabase } from './seeds';
 import { testDataSource } from './setup';
 

@@ -1,4 +1,4 @@
-import { userStatuses } from '../entities/defaults';
+import { userStatuses } from '../../src/testing/entities/defaults';
 import { numericRanges, randomEntityConfig } from './seed-configuration';
 import { createRandomGenerator } from './random-generator';
 import type { CategorySeed, OrderSeed, ProductSeed, SeedDataset, UserSeed } from './types';

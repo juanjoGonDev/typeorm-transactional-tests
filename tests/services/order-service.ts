@@ -1,11 +1,11 @@
 import { randomUUID } from 'crypto';
 import type { DataSource } from 'typeorm';
-import { orderStatuses, paymentStatuses } from '../entities/defaults';
-import { Order } from '../entities/Order.entity';
-import { OrderItem } from '../entities/OrderItem.entity';
-import { Payment } from '../entities/Payment.entity';
-import { Product } from '../entities/Product.entity';
-import { User } from '../entities/User.entity';
+import { orderStatuses, paymentStatuses } from '../../src/testing/entities/defaults';
+import { Order } from '../../src/testing/entities/Order.entity';
+import { OrderItem } from '../../src/testing/entities/OrderItem.entity';
+import { Payment } from '../../src/testing/entities/Payment.entity';
+import { Product } from '../../src/testing/entities/Product.entity';
+import { User } from '../../src/testing/entities/User.entity';
 
 const userNotFoundMessage = 'User not found for email';
 const productNotFoundMessage = 'Product not found for sku';
@@ -32,7 +32,7 @@ export class TransactionalOrderService {
   }
 
   public async placeOrder(input: OrderCreationInput): Promise<Order> {
-    return this.dataSource.manager.transaction(async (manager) => {
+    return await this.dataSource.manager.transaction(async (manager) => {
       const userRepository = manager.getRepository(User);
       const productRepository = manager.getRepository(Product);
       const orderRepository = manager.getRepository(Order);

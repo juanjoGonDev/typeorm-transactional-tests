@@ -40,6 +40,7 @@ on:
 
 env:
   NODE_VERSION: "18.20"
+  PNPM_VERSION: "8.15.4"
 
 run-name: 🔄 Auto release${{ github.event.inputs.dry_run == 'true' && ' (dry)' || '' }}
 
@@ -89,22 +90,29 @@ jobs:
         with:
           node-version: "${{ env.NODE_VERSION }}"
           registry-url: "https://registry.npmjs.org/"
-          cache: yarn
+          cache: 'pnpm'
+      - name: 📦 Setup pnpm
+        if: steps.check_commits.outputs.enough_commits == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: "${{ env.PNPM_VERSION }}"
+          run_install: false
       - name: ⚙️ Install dependencies
         if: steps.check_commits.outputs.enough_commits == 'true'
-        run: yarn install --immutable --check-cache
+        run: pnpm install --frozen-lockfile
       - name: 🚧 Run build
         if: steps.check_commits.outputs.enough_commits == 'true'
-        run: yarn run build
+        run: pnpm build
       - name: 🧪 Install package test
         if: steps.check_commits.outputs.enough_commits == 'true'
         run: |
-          mkdir test-install
-          yarn pack --filename test-install/package.tar.gz
-          cd test-install
-          yarn init -y
-          touch yarn.lock
-          yarn add -D ./package.tar.gz
+          TEST_DIR="test-install"
+          mkdir "$TEST_DIR"
+          pnpm pack --pack-destination "$TEST_DIR"
+          cd "$TEST_DIR"
+          pnpm init --yes
+          PACKAGE_TARBALL=$(find . -maxdepth 1 -name '*.tgz' -print -quit)
+          pnpm add --save-dev "$PACKAGE_TARBALL"
       - name: 🆙 Dry run release
         if: steps.check_commits.outputs.enough_commits == 'true' && github.event.inputs.dry_run == 'true'
         run: |
@@ -115,7 +123,7 @@ jobs:
             STRATEGY=${{ github.event.inputs.strategy }}
           fi
 
-          yarn release --release-as "$STRATEGY" --dry-run
+          pnpm release --release-as "$STRATEGY" --dry-run
       - name: 🚫 Dry run active
         if: steps.check_commits.outputs.enough_commits == 'true' && github.event.inputs.dry_run == 'true'
         run: echo "🔍 Dry run is enabled. Skipping publishing, tagging and PR steps."
@@ -134,7 +142,7 @@ jobs:
             STRATEGY=${{ github.event.inputs.strategy }}
           fi
 
-          yarn release --release-as $STRATEGY
+          pnpm release --release-as $STRATEGY
           git push --follow-tags origin release/${{ github.run_number }}
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_FINE }}

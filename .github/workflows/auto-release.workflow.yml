@@ -90,7 +90,6 @@ jobs:
         with:
           node-version: "${{ env.NODE_VERSION }}"
           registry-url: "https://registry.npmjs.org/"
-          cache: 'pnpm'
       - name: 📦 Setup pnpm
         if: steps.check_commits.outputs.enough_commits == 'true'
         uses: pnpm/action-setup@v4

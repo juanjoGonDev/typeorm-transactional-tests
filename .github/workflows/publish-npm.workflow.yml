@@ -21,6 +21,7 @@ run-name: 🚀 Publish to npm${{ github.event.inputs.dry_run == 'true' && ' (dry
 
 env:
   NODE_VERSION: "18.20"
+  PNPM_VERSION: "8.15.4"
 
 jobs:
   release:
@@ -35,19 +36,25 @@ jobs:
         with:
           node-version: "${{ env.NODE_VERSION }}"
           registry-url: "https://registry.npmjs.org/"
-          cache: yarn
-      - name: ⚙️ yarn install
-        run: yarn install --immutable --check-cache
+          cache: 'pnpm'
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "${{ env.PNPM_VERSION }}"
+          run_install: false
+      - name: ⚙️ pnpm install
+        run: pnpm install --frozen-lockfile
       - name: 🚧 Run build
-        run: yarn build
+        run: pnpm build
       - name: 🧪 Install package test
         run: |
-          mkdir test-install
-          yarn pack --filename test-install/package.tar.gz
-          cd test-install
-          yarn init -y
-          touch yarn.lock
-          yarn add -D ./package.tar.gz
+          TEST_DIR="test-install"
+          mkdir "$TEST_DIR"
+          pnpm pack --pack-destination "$TEST_DIR"
+          cd "$TEST_DIR"
+          pnpm init --yes
+          PACKAGE_TARBALL=$(find . -maxdepth 1 -name '*.tgz' -print -quit)
+          pnpm add --save-dev "$PACKAGE_TARBALL"
       - name: 🎉 Publish to npm
         if: github.event.inputs.dry_run != 'true'
         run: npm publish

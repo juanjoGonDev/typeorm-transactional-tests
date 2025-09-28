@@ -12,8 +12,8 @@
     "build": "tsc -p tsconfig.build.json",
     "clean": "rimraf dist",
     "prebuild": "pnpm clean",
-    "pretest": "pnpm build",
     "test": "jest --ci --runInBand --forceExit --verbose --showSeed --coverage --config ./tests/jest.config.ts",
+    "test:ci": "NODE_ENV=test jest --ci --runInBand --forceExit --verbose --showSeed --coverage --config ./tests/jest.config.ts",
     "lint": "eslint --fix",
     "release": "standard-version"
   },

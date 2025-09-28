@@ -1,5 +1,5 @@
 {
-  "name": "typeorm-transactional-tests",
+  "name": "@typeorm-testing/transactional-tests",
   "version": "1.0.0",
   "description": "Automated transactional lifecycle helpers for TypeORM tests",
   "license": "GPL-3.0-only",
@@ -8,6 +8,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "clean": "rimraf dist",

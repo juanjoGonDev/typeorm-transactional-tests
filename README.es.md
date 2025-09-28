@@ -17,7 +17,7 @@ TypeORM Transactional Tests envuelve cada spec de Jest en una transacción de ba
 ## Instalación
 
 ```bash
-pnpm add typeorm-transactional-tests
+pnpm add @typeorm-testing/transactional-tests
 pnpm add typeorm # dependencia peer obligatoria
 ```
 
@@ -28,27 +28,27 @@ Instala TypeORM en el proyecto anfitrión si aún no está disponible.
 Crea un archivo de configuración de Jest que inicialice la conexión y registre el ciclo de vida transaccional.
 
 ```typescript
-import { afterAll, afterEach, beforeAll, beforeEach } from '@jest/globals';
-import { DataSource } from 'typeorm';
-import { registerTransactionalTestHooks } from 'typeorm-transactional-tests';
+import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
+import { DataSource } from "typeorm";
+import { registerTransactionalTestHooks } from "@typeorm-testing/transactional-tests";
 
 const dataSource = new DataSource({
-  type: 'mysql',
-  host: '127.0.0.1',
+  type: "mysql",
+  host: "127.0.0.1",
   port: 3306,
-  username: 'root',
-  password: 'test',
-  database: 'test',
+  username: "root",
+  password: "test",
+  database: "test",
   synchronize: true,
-  entities: []
+  entities: [],
 });
 
 registerTransactionalTestHooks({
   dataSource,
   hooks: {
     beforeEach,
-    afterEach
-  }
+    afterEach,
+  },
 });
 
 beforeAll(async () => {

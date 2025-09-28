@@ -1,9 +1,9 @@
-const seedrandom = require('seedrandom');
-const TestSequencerModule = require('@jest/test-sequencer');
+const seedrandom = require("seedrandom");
+const TestSequencerModule = require("@jest/test-sequencer");
 
 const TestSequencerClass = TestSequencerModule.default ?? TestSequencerModule;
-const seedVariableName = 'TEST_SEED';
-const seedFallbackValue = 'typeorm-transactional-tests';
+const seedVariableName = "TEST_SEED";
+const seedFallbackValue = "typeorm-test-db";
 
 const createRandomGenerator = (seed) => {
   const random = seedrandom(seed);

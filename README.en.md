@@ -17,7 +17,7 @@ TypeORM Transactional Tests wraps every Jest spec in an isolated database transa
 ## Installation
 
 ```bash
-pnpm add @typeorm-testing/transactional-tests
+pnpm add typeorm-test-db
 pnpm add typeorm # peer dependency example
 ```
 
@@ -30,7 +30,7 @@ Create a Jest setup file that initializes the data source and registers the tran
 ```typescript
 import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
 import { DataSource } from "typeorm";
-import { registerTransactionalTestHooks } from "@typeorm-testing/transactional-tests";
+import { registerTransactionalTestHooks } from "typeorm-test-db";
 
 const dataSource = new DataSource({
   type: "mysql",

@@ -12,7 +12,7 @@ const config: Config = {
   coverageDirectory: "coverage",
   testSequencer: "./setup/test-sequencer.js",
   moduleNameMapper: {
-    ["^typeorm-transactional-tests$"]: "<rootDir>/dist",
+    ["^typeorm-test-db$"]: "<rootDir>/dist",
   },
 };
 

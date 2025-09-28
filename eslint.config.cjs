@@ -1,23 +1,27 @@
-const tsEslint = require('@typescript-eslint/eslint-plugin');
-const tsParser = require('@typescript-eslint/parser');
-const prettierConfig = require('eslint-config-prettier');
+const tsEslint = require("@typescript-eslint/eslint-plugin");
+const tsParser = require("@typescript-eslint/parser");
+const prettierConfig = require("eslint-config-prettier");
 
-const ignoreDirectories = ['dist', 'node_modules', 'coverage'];
-const tsFilePatterns = ['**/*.ts', '**/*.tsx'];
+const ignoreDirectories = ["dist", "node_modules", "coverage"];
+const tsFilePatterns = ["src/**/*.ts"];
 const ecmaVersionTarget = 2021;
-const moduleSourceType = 'module';
-const tsconfigPath = './tsconfig.json';
-const configKeyCandidates = ['recommended-type-checked', 'recommendedTypeChecked'];
-const missingConfigMessage = 'Missing recommended type-checked configuration for @typescript-eslint/eslint-plugin';
-const importNoDefaultExportRule = 'import/no-default-export';
-const disabledRuleState = 'off';
+const moduleSourceType = "module";
+const tsconfigPath = "./tsconfig.json";
+const configKeyCandidates = [
+  "recommended-type-checked",
+  "recommendedTypeChecked",
+];
+const missingConfigMessage =
+  "Missing recommended type-checked configuration for @typescript-eslint/eslint-plugin";
+const importNoDefaultExportRule = "import/no-default-export";
+const disabledRuleState = "off";
 const disabledTypeSafetyRules = {
-  '@typescript-eslint/no-unsafe-assignment': disabledRuleState,
-  '@typescript-eslint/no-unsafe-call': disabledRuleState,
-  '@typescript-eslint/no-unsafe-member-access': disabledRuleState,
-  '@typescript-eslint/no-unsafe-return': disabledRuleState,
-  '@typescript-eslint/no-unsafe-argument': disabledRuleState,
-  '@typescript-eslint/no-redundant-type-constituents': disabledRuleState
+  "@typescript-eslint/no-unsafe-assignment": disabledRuleState,
+  "@typescript-eslint/no-unsafe-call": disabledRuleState,
+  "@typescript-eslint/no-unsafe-member-access": disabledRuleState,
+  "@typescript-eslint/no-unsafe-return": disabledRuleState,
+  "@typescript-eslint/no-unsafe-argument": disabledRuleState,
+  "@typescript-eslint/no-redundant-type-constituents": disabledRuleState,
 };
 
 const recommendedConfig = configKeyCandidates
@@ -28,11 +32,12 @@ if (!recommendedConfig) {
   throw new Error(missingConfigMessage);
 }
 
-const prettierRules = prettierConfig && prettierConfig.rules ? prettierConfig.rules : {};
+const prettierRules =
+  prettierConfig && prettierConfig.rules ? prettierConfig.rules : {};
 
 module.exports = [
   {
-    ignores: ignoreDirectories
+    ignores: ignoreDirectories,
   },
   {
     files: tsFilePatterns,
@@ -42,17 +47,17 @@ module.exports = [
       parser: tsParser,
       parserOptions: {
         project: tsconfigPath,
-        tsconfigRootDir: __dirname
-      }
+        tsconfigRootDir: __dirname,
+      },
     },
     plugins: {
-      '@typescript-eslint': tsEslint
+      "@typescript-eslint": tsEslint,
     },
     rules: {
       ...recommendedConfig.rules,
       ...prettierRules,
       ...disabledTypeSafetyRules,
-      [importNoDefaultExportRule]: disabledRuleState
-    }
-  }
+      [importNoDefaultExportRule]: disabledRuleState,
+    },
+  },
 ];

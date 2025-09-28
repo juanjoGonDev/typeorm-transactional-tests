@@ -20,8 +20,11 @@ const workerLabelPrefix = 'worker';
 const identifierSeparator = '_';
 const postgresDefaultDatabase = 'postgres';
 const mysqlCreateDatabaseStatement = 'CREATE DATABASE IF NOT EXISTS';
+const mysqlGrantPrivilegesStatement = 'GRANT ALL PRIVILEGES ON';
+const mysqlToClause = 'TO';
 const postgresDatabaseExistsQuery = 'SELECT 1 FROM pg_database WHERE datname = $1';
 const postgresCreateDatabaseStatement = 'CREATE DATABASE';
+const mysqlDefaultRuntimeHost = '%';
 
 const prepareNoop = async (): Promise<void> => {
   return Promise.resolve();
@@ -36,7 +39,8 @@ const environmentVariableNames = {
     password: 'TEST_MYSQL_PASSWORD',
     database: 'TEST_MYSQL_DATABASE',
     adminUsername: 'TEST_MYSQL_ADMIN_USER',
-    adminPassword: 'TEST_MYSQL_ADMIN_PASSWORD'
+    adminPassword: 'TEST_MYSQL_ADMIN_PASSWORD',
+    runtimeHost: 'TEST_MYSQL_RUNTIME_HOST'
   },
   mariadb: {
     host: 'TEST_MARIADB_HOST',
@@ -45,7 +49,8 @@ const environmentVariableNames = {
     password: 'TEST_MARIADB_PASSWORD',
     database: 'TEST_MARIADB_DATABASE',
     adminUsername: 'TEST_MARIADB_ADMIN_USER',
-    adminPassword: 'TEST_MARIADB_ADMIN_PASSWORD'
+    adminPassword: 'TEST_MARIADB_ADMIN_PASSWORD',
+    runtimeHost: 'TEST_MARIADB_RUNTIME_HOST'
   },
   postgres: {
     host: 'TEST_POSTGRES_HOST',
@@ -191,6 +196,12 @@ const formatMysqlIdentifier = (identifier: string): string => {
   return `\`${sanitized}\``;
 };
 
+const formatMysqlUserReference = (username: string, host: string): string => {
+  const sanitizedUsername = username.replace(/'/g, "''");
+  const sanitizedHost = host.replace(/'/g, "''");
+  return `'${sanitizedUsername}'@'${sanitizedHost}'`;
+};
+
 const formatPostgresIdentifier = (identifier: string): string => {
   const sanitized = identifier.replace(/"/g, '');
   return `"${sanitized}"`;
@@ -273,6 +284,14 @@ const resolveMysqlAdminCredentials = (
   return { username, password };
 };
 
+const resolveMysqlRuntimeHost = (envNames: MysqlLikeEnv, env: NodeJS.ProcessEnv): string => {
+  const host = env[envNames.runtimeHost];
+  if (host === undefined || host.trim() === '') {
+    return mysqlDefaultRuntimeHost;
+  }
+  return host.trim();
+};
+
 const createMysqlPreparation = (
   options: MysqlLikeOptions,
   envNames: MysqlLikeEnv,
@@ -281,6 +300,7 @@ const createMysqlPreparation = (
   return async () => {
     const env = process.env;
     const adminCredentials = resolveMysqlAdminCredentials(envNames, defaults, env);
+    const runtimeHost = resolveMysqlRuntimeHost(envNames, env);
     const pool = createPool({
       host: env[envNames.host] ?? defaults.host,
       port: readInteger(env[envNames.port], defaults.port),
@@ -293,6 +313,12 @@ const createMysqlPreparation = (
 
     try {
       await pool.query(`${mysqlCreateDatabaseStatement} ${formatMysqlIdentifier(options.database)}`);
+      await pool.query(
+        `${mysqlGrantPrivilegesStatement} ${formatMysqlIdentifier(options.database)}.* ${mysqlToClause} ${formatMysqlUserReference(
+          options.username,
+          runtimeHost
+        )}`
+      );
     } finally {
       await pool.end();
     }

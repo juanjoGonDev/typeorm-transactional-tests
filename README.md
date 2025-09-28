@@ -1,4 +1,4 @@
-<h1 align="center">TYPEORM TRANSACTIONAL TESTS</h1>
+<h1 align="center">TYPEORM TEST DB</h1>
 <p align="center">
  <img alt="GitHub commit activity" src="https://nodei.co/npm/typeorm-test-db.png"/>
  </p>

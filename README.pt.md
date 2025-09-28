@@ -1,8 +1,8 @@
-# TypeORM Transactional Tests
+# TypeORM Test DB
 
 ## Visão geral
 
-TypeORM Transactional Tests envolve cada spec do Jest em uma transação de banco de dados isolada. O helper aceita qualquer `DataSource` inicializado, substitui seu manager durante a spec e restaura o manager original após o rollback. O pacote atende configurações de teste reutilizáveis que mantêm o banco de dados de integração limpo.
+TypeORM Test DB envolve cada spec do Jest em uma transação de banco de dados isolada. O helper aceita qualquer `DataSource` inicializado, substitui seu manager durante a spec e restaura o manager original após o rollback. O pacote atende configurações de teste reutilizáveis que mantêm o banco de dados de integração limpo.
 
 ## Recursos
 
@@ -78,4 +78,4 @@ O workflow do GitHub Actions executa o lint e a suíte do Jest contra uma matriz
 
 ## Licença
 
-TypeORM Transactional Tests está disponível sob a GNU General Public License v3.0 ou posterior.
+TypeORM Test DB está disponível sob a GNU General Public License v3.0 ou posterior.

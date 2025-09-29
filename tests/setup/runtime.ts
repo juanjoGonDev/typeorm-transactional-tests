@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
-import { registerTransactionalTestHooks } from "../../dist/index";
+import { TypeormTestDB } from "typeorm-test-db";
 import { prepareTestDatabase, testDataSource } from "./test-data-source";
 
 const initializationErrorMessage =
@@ -23,13 +23,15 @@ const composeErrorMessage = (message: string, cause: Error): string => {
   return `${message}${detailSeparator}${causePrefix}${cause.message}`;
 };
 
-export const registerTransactionalEnvironment = (): void => {
-  registerTransactionalTestHooks({
-    dataSource: testDataSource,
-    hooks: {
-      beforeEach,
-      afterEach,
-    },
+export const registerTypeormTestDbEnvironment = (): void => {
+  const lifecycle = TypeormTestDB(testDataSource);
+
+  beforeEach(async () => {
+    await lifecycle.init();
+  });
+
+  afterEach(async () => {
+    await lifecycle.finish();
   });
 
   beforeAll(async () => {

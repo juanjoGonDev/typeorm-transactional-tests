@@ -1,14 +1,14 @@
 import type { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import { errorMessages } from '../constants/messages';
 
-export interface TransactionalTestLifecycle {
+export interface TypeormTestDbLifecycle {
   readonly init: () => Promise<void>;
   readonly finish: () => Promise<void>;
 }
 
-type TransactionCallback<TResult> = (runManager: EntityManager) => Promise<TResult> | TResult;
+type LifecycleCallback<TResult> = (runManager: EntityManager) => Promise<TResult> | TResult;
 
-export class TransactionalTestContext implements TransactionalTestLifecycle {
+export class TypeormTestDbContext implements TypeormTestDbLifecycle {
   private readonly dataSource: DataSource;
   private originalManager: EntityManager | null = null;
   private queryRunner: QueryRunner | null = null;
@@ -87,18 +87,18 @@ export class TransactionalTestContext implements TransactionalTestLifecycle {
     });
   }
 
-  private extractTransactionCallback<T>(args: ReadonlyArray<unknown>): TransactionCallback<T> {
+  private extractLifecycleCallback<T>(args: ReadonlyArray<unknown>): LifecycleCallback<T> {
     const [first, second] = args;
-    if (this.isTransactionCallback<T>(first)) {
+    if (this.isLifecycleCallback<T>(first)) {
       return first;
     }
-    if (this.isTransactionCallback<T>(second)) {
+    if (this.isLifecycleCallback<T>(second)) {
       return second;
     }
     throw new Error(errorMessages.transactionCallbackMissing);
   }
 
-  private isTransactionCallback<T>(candidate: unknown): candidate is TransactionCallback<T> {
+  private isLifecycleCallback<T>(candidate: unknown): candidate is LifecycleCallback<T> {
     return typeof candidate === 'function';
   }
 
@@ -108,7 +108,7 @@ export class TransactionalTestContext implements TransactionalTestLifecycle {
     this.originalManagerTransaction = manager.transaction.bind(manager);
 
     const patched = async <T>(...args: ReadonlyArray<unknown>): Promise<T> => {
-      const callback = this.extractTransactionCallback<T>(args);
+      const callback = this.extractLifecycleCallback<T>(args);
       const result = callback(manager);
       return Promise.resolve(result);
     };

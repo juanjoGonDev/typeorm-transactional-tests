@@ -6,8 +6,8 @@ TypeORM Test DB envolve cada spec do Jest em uma transação de banco de dados i
 
 ## Recursos
 
-- Helper de ciclo de vida transacional com hooks explícitos `init` e `finish`.
-- Registro de hooks do Jest que abre e reverte transações automaticamente.
+- Helper do ciclo de vida do banco de dados de testes para TypeORM com hooks explícitos `init` e `finish`.
+- Integração agnóstica de framework ao invocar o ciclo de vida dentro dos hooks do runner de testes.
 - Compatibilidade com MySQL, MariaDB, PostgreSQL, SQLite e Better SQLite 3.
 - Fábricas de dados determinísticas impulsionadas por uma semente de execução reproduzível.
 - Configuração de testes compartilhada que inicializa uma única conexão por worker e executa as specs em paralelo.
@@ -25,12 +25,12 @@ Instale o TypeORM no projeto hospedeiro caso ainda não esteja disponível.
 
 ## Uso
 
-Crie um arquivo de configuração do Jest que inicialize a conexão e registre o ciclo de vida transacional.
+Crie um arquivo de configuração do Jest que inicialize a conexão e registre o ciclo de vida do banco de dados de testes para TypeORM.
 
 ```typescript
 import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
 import { DataSource } from "typeorm";
-import { registerTransactionalTestHooks } from "typeorm-test-db";
+import { TypeormTestDB } from "typeorm-test-db";
 
 const dataSource = new DataSource({
   type: "mysql",
@@ -43,12 +43,14 @@ const dataSource = new DataSource({
   entities: [],
 });
 
-registerTransactionalTestHooks({
-  dataSource,
-  hooks: {
-    beforeEach,
-    afterEach,
-  },
+const lifecycle = TypeormTestDB(dataSource);
+
+beforeEach(async () => {
+  await lifecycle.init();
+});
+
+afterEach(async () => {
+  await lifecycle.finish();
 });
 
 beforeAll(async () => {

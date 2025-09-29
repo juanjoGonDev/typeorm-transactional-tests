@@ -1,3 +1,3 @@
-import { registerTransactionalEnvironment } from './runtime';
+import { registerTypeormTestDbEnvironment } from './runtime';
 
-registerTransactionalEnvironment();
+registerTypeormTestDbEnvironment();

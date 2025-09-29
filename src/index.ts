@@ -1,16 +1,8 @@
 import type { DataSource } from 'typeorm';
-import { TransactionalTestContext, type TransactionalTestLifecycle } from './lifecycle/TransactionalTestContext';
-import { registerTransactionalTestHooks } from './lifecycle/registerTransactionalHooks';
+import { TypeormTestDbContext, type TypeormTestDbLifecycle } from './lifecycle/TypeormTestDbContext';
 
-export const createTransactionalTestContext = (dataSource: DataSource): TransactionalTestLifecycle => {
-  return new TransactionalTestContext(dataSource);
+export const TypeormTestDB = (dataSource: DataSource): TypeormTestDbLifecycle => {
+  return new TypeormTestDbContext(dataSource);
 };
 
-export { registerTransactionalTestHooks };
-
-export type { TransactionalTestLifecycle } from './lifecycle/TransactionalTestContext';
-export type {
-  RegisterTransactionalTestHooksOptions,
-  RegisteredTransactionalTestHooks,
-  TransactionalTestHooks
-} from './lifecycle/registerTransactionalHooks';
+export type { TypeormTestDbLifecycle };

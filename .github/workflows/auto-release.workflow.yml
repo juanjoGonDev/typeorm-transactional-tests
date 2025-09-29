@@ -39,8 +39,8 @@ on:
           - "false"
 
 env:
-  NODE_VERSION: "18.20"
-  PNPM_VERSION: "8.15.4"
+  NODE_VERSION: ${{vars.NODE_VERSION}}
+  PNPM_VERSION: ${{vars.PNPM_VERSION}}
 
 run-name: 🔄 Auto release${{ github.event.inputs.dry_run == 'true' && ' (dry)' || '' }}
 

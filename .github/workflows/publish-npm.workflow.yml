@@ -20,8 +20,8 @@ on:
 run-name: 🚀 Publish to npm${{ github.event.inputs.dry_run == 'true' && ' (dry)' || '' }}
 
 env:
-  NODE_VERSION: "18.20"
-  PNPM_VERSION: "8.15.4"
+  NODE_VERSION: ${{vars.NODE_VERSION}}
+  PNPM_VERSION: ${{vars.PNPM_VERSION}}
 
 jobs:
   release:

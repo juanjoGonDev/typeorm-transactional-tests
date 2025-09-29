@@ -52,21 +52,13 @@ beforeEach(async () => {
 afterEach(async () => {
   await lifecycle.finish();
 });
-
-beforeAll(async () => {
-  await dataSource.initialize();
-});
-
-afterAll(async () => {
-  await dataSource.destroy();
-});
 ```
 
 Import your repositories or managers inside the specs. Every mutation executed between the registered hooks is rolled back automatically.
 
 ## Test Execution
 
-The suite seeds reproducible fixtures per spec and exposes the `TEST_SEED` environment variable to control execution order. `pnpm test` runs Jest in parallel workers, enforces coverage collection, and builds the package beforehand so the compiled output is exercised.
+The suite seeds reproducible fixtures per spec and exposes the `TEST_SEED` environment variable to control execution order. `pnpm test` runs Jest in parallel workers and enforces coverage collection.
 
 ## Continuous Integration
 

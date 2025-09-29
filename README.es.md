@@ -52,14 +52,6 @@ beforeEach(async () => {
 afterEach(async () => {
   await lifecycle.finish();
 });
-
-beforeAll(async () => {
-  await dataSource.initialize();
-});
-
-afterAll(async () => {
-  await dataSource.destroy();
-});
 ```
 
 Importa tus repositorios o managers dentro de las specs. Todas las mutaciones ejecutadas entre los hooks registrados se revierten de forma automática.
@@ -76,7 +68,7 @@ El workflow de GitHub Actions ejecuta el linting y la suite de Jest contra una m
 
 - `pnpm lint` verifica la calidad del código.
 - `pnpm build` genera el bundle de producción en `dist`.
-- `pnpm test` recompila el paquete, ejecuta las pruebas con datos semilla y comprueba que el tarball se pueda instalar en un proyecto limpio.
+- `pnpm test` recompila el paquete y ejecuta las pruebas con datos semilla.
 
 ## Licencia
 

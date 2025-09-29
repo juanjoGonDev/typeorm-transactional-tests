@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
-import { TypeormTestDB } from "typeorm-test-db";
+import { TypeormTestDB } from "../../dist/index";
 import { prepareTestDatabase, testDataSource } from "./test-data-source";
 
 const initializationErrorMessage =

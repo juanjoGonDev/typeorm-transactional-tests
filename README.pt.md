@@ -52,21 +52,13 @@ beforeEach(async () => {
 afterEach(async () => {
   await lifecycle.finish();
 });
-
-beforeAll(async () => {
-  await dataSource.initialize();
-});
-
-afterAll(async () => {
-  await dataSource.destroy();
-});
 ```
 
 Importe seus repositórios ou managers dentro das specs. Todas as mutações executadas entre os hooks registrados são revertidas automaticamente.
 
 ## Execução dos testes
 
-A suíte gera dados reproduzíveis por spec e expõe a variável de ambiente `TEST_SEED` para controlar a ordem de execução. `pnpm test` executa o Jest em workers paralelos, força a coleta de cobertura e compila o pacote antes das provas para exercitar a saída empacotada.
+A suíte gera dados reproduzíveis por spec e expõe a variável de ambiente `TEST_SEED` para controlar a ordem de execução. `pnpm test` executa o Jest em workers paralelos e força a coleta de cobertura.
 
 ## Integração contínua
 

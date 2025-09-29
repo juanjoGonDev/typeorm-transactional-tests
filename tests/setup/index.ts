@@ -1,2 +1,2 @@
 export { testDataSource } from './test-data-source';
-export { registerTransactionalEnvironment } from './runtime';
+export { registerTypeormTestDbEnvironment } from './runtime';

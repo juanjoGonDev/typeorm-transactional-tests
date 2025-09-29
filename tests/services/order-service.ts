@@ -20,7 +20,7 @@ export interface OrderCreationInput {
   readonly items: ReadonlyArray<OrderCreationItem>;
 }
 
-export class TransactionalOrderService {
+export class TypeormTestDbOrderService {
   private readonly dataSource: DataSource;
 
   constructor(dataSource: DataSource) {

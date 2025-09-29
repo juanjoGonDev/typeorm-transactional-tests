@@ -98,7 +98,7 @@ const mariadbDefaults: MysqlLikeDefaults = {
 const postgresDefaults = {
   host: "127.0.0.1",
   port: 5432,
-  username: "postgres",
+  username: "typeorm-test-db",
   password: "test",
   database: "test",
 } as const;

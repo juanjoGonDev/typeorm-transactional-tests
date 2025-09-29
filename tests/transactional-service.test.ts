@@ -3,11 +3,11 @@ import { In } from "typeorm";
 import { fixedProducts, fixedUsers } from "./seeds/fixed-data";
 import { seedDatabase } from "./seeds";
 import { testDataSource } from "./setup";
-import { TransactionalOrderService } from "./services/order-service";
+import { TypeormTestDbOrderService } from "./services/order-service";
 import { Product } from "./entities";
 import { paymentStatuses } from "./entities/defaults";
 
-const suiteTitle = "Transactional order service";
+const suiteTitle = "TypeORM test database order service";
 const providerName = "service-stripe";
 const orderQuantityFirst = 2;
 const orderQuantitySecond = 1;
@@ -38,7 +38,7 @@ describe(suiteTitle, () => {
       where: { sku: In([firstSku, secondSku]) },
     });
 
-    const service = new TransactionalOrderService(testDataSource);
+    const service = new TypeormTestDbOrderService(testDataSource);
     const order = await service.placeOrder({
       userEmail,
       provider: providerName,

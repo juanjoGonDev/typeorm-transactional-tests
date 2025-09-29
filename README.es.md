@@ -6,7 +6,7 @@ TypeORM Test DB envuelve cada spec de Jest en una transacción de base de datos 
 
 ## Características
 
-- Helper de ciclo de vida transaccional con hooks explícitos `init` y `finish`.
+- Helper del ciclo de vida de la base de datos de pruebas para TypeORM con hooks explícitos `init` y `finish`.
 - Integración agnóstica del framework invocando el ciclo de vida dentro de los hooks del runner de pruebas.
 - Compatibilidad con MySQL, MariaDB, PostgreSQL, SQLite y Better SQLite 3.
 - Fábricas de datos deterministas impulsadas por una semilla de ejecución reproducible.
@@ -25,12 +25,12 @@ Instala TypeORM en el proyecto anfitrión si aún no está disponible.
 
 ## Uso
 
-Crea un archivo de configuración de Jest que inicialice la conexión y registre el ciclo de vida transaccional.
+Crea un archivo de configuración de Jest que inicialice la conexión y registre el ciclo de vida de la base de datos de pruebas para TypeORM.
 
 ```typescript
 import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
 import { DataSource } from "typeorm";
-import { createTransactionalTestContext } from "typeorm-test-db";
+import { TypeormTestDB } from "typeorm-test-db";
 
 const dataSource = new DataSource({
   type: "mysql",
@@ -43,7 +43,7 @@ const dataSource = new DataSource({
   entities: [],
 });
 
-const lifecycle = createTransactionalTestContext(dataSource);
+const lifecycle = TypeormTestDB(dataSource);
 
 beforeEach(async () => {
   await lifecycle.init();
@@ -51,14 +51,6 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await lifecycle.finish();
-});
-
-beforeAll(async () => {
-  await dataSource.initialize();
-});
-
-afterAll(async () => {
-  await dataSource.destroy();
 });
 ```
 
@@ -76,7 +68,7 @@ El workflow de GitHub Actions ejecuta el linting y la suite de Jest contra una m
 
 - `pnpm lint` verifica la calidad del código.
 - `pnpm build` genera el bundle de producción en `dist`.
-- `pnpm test` recompila el paquete, ejecuta las pruebas con datos semilla y comprueba que el tarball se pueda instalar en un proyecto limpio.
+- `pnpm test` recompila el paquete y ejecuta las pruebas con datos semilla.
 
 ## Licencia
 

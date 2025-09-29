@@ -4,11 +4,11 @@ import { testDataSource } from "./setup";
 import { User, Profile, Address } from "./entities";
 import { userStatuses } from "./entities/defaults";
 
-const suiteTitle = "Transactional lifecycle";
-const transientUserName = "Transactional Spec User";
-const transientUserEmail = "transactional.spec.user@example.com";
+const suiteTitle = "TypeORM test database lifecycle";
+const transientUserName = "TypeORM Test DB Spec User";
+const transientUserEmail = "typeorm.test.db.spec.user@example.com";
 const transientUserBio =
-  "Temporary profile created during a transactional test.";
+  "Temporary profile created during a TypeORM test database run.";
 const transientCity = "Testville";
 const transientCountry = "Testland";
 const transientStreet = "123 Integration Way";

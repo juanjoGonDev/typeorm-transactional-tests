@@ -6,7 +6,7 @@ TypeORM Test DB envolve cada spec do Jest em uma transação de banco de dados i
 
 ## Recursos
 
-- Helper de ciclo de vida transacional com hooks explícitos `init` e `finish`.
+- Helper do ciclo de vida do banco de dados de testes para TypeORM com hooks explícitos `init` e `finish`.
 - Integração agnóstica de framework ao invocar o ciclo de vida dentro dos hooks do runner de testes.
 - Compatibilidade com MySQL, MariaDB, PostgreSQL, SQLite e Better SQLite 3.
 - Fábricas de dados determinísticas impulsionadas por uma semente de execução reproduzível.
@@ -25,12 +25,12 @@ Instale o TypeORM no projeto hospedeiro caso ainda não esteja disponível.
 
 ## Uso
 
-Crie um arquivo de configuração do Jest que inicialize a conexão e registre o ciclo de vida transacional.
+Crie um arquivo de configuração do Jest que inicialize a conexão e registre o ciclo de vida do banco de dados de testes para TypeORM.
 
 ```typescript
 import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
 import { DataSource } from "typeorm";
-import { createTransactionalTestContext } from "typeorm-test-db";
+import { TypeormTestDB } from "typeorm-test-db";
 
 const dataSource = new DataSource({
   type: "mysql",
@@ -43,7 +43,7 @@ const dataSource = new DataSource({
   entities: [],
 });
 
-const lifecycle = createTransactionalTestContext(dataSource);
+const lifecycle = TypeormTestDB(dataSource);
 
 beforeEach(async () => {
   await lifecycle.init();
@@ -52,21 +52,13 @@ beforeEach(async () => {
 afterEach(async () => {
   await lifecycle.finish();
 });
-
-beforeAll(async () => {
-  await dataSource.initialize();
-});
-
-afterAll(async () => {
-  await dataSource.destroy();
-});
 ```
 
 Importe seus repositórios ou managers dentro das specs. Todas as mutações executadas entre os hooks registrados são revertidas automaticamente.
 
 ## Execução dos testes
 
-A suíte gera dados reproduzíveis por spec e expõe a variável de ambiente `TEST_SEED` para controlar a ordem de execução. `pnpm test` executa o Jest em workers paralelos, força a coleta de cobertura e compila o pacote antes das provas para exercitar a saída empacotada.
+A suíte gera dados reproduzíveis por spec e expõe a variável de ambiente `TEST_SEED` para controlar a ordem de execução. `pnpm test` executa o Jest em workers paralelos e força a coleta de cobertura.
 
 ## Integração contínua
 

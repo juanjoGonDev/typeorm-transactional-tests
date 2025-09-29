@@ -6,7 +6,7 @@ TypeORM Test DB wraps every Jest spec in an isolated database transaction. The h
 
 ## Features
 
-- Transaction lifecycle helper with explicit `init` and `finish` hooks.
+- TypeORM test database lifecycle helper with explicit `init` and `finish` hooks.
 - Framework-agnostic integration by invoking the lifecycle inside your test runner hooks.
 - Compatibility with MySQL, MariaDB, PostgreSQL, SQLite, and Better SQLite 3.
 - Deterministic data factories driven by a reproducible execution seed.
@@ -25,12 +25,12 @@ Install TypeORM in the host project if it is not already available.
 
 ## Usage
 
-Create a Jest setup file that initializes the data source and registers the transactional lifecycle.
+Create a Jest setup file that initializes the data source and registers the TypeORM test database lifecycle.
 
 ```typescript
 import { afterAll, afterEach, beforeAll, beforeEach } from "@jest/globals";
 import { DataSource } from "typeorm";
-import { createTransactionalTestContext } from "typeorm-test-db";
+import { TypeormTestDB } from "typeorm-test-db";
 
 const dataSource = new DataSource({
   type: "mysql",
@@ -43,7 +43,7 @@ const dataSource = new DataSource({
   entities: [],
 });
 
-const lifecycle = createTransactionalTestContext(dataSource);
+const lifecycle = TypeormTestDB(dataSource);
 
 beforeEach(async () => {
   await lifecycle.init();
@@ -52,21 +52,13 @@ beforeEach(async () => {
 afterEach(async () => {
   await lifecycle.finish();
 });
-
-beforeAll(async () => {
-  await dataSource.initialize();
-});
-
-afterAll(async () => {
-  await dataSource.destroy();
-});
 ```
 
 Import your repositories or managers inside the specs. Every mutation executed between the registered hooks is rolled back automatically.
 
 ## Test Execution
 
-The suite seeds reproducible fixtures per spec and exposes the `TEST_SEED` environment variable to control execution order. `pnpm test` runs Jest in parallel workers, enforces coverage collection, and builds the package beforehand so the compiled output is exercised.
+The suite seeds reproducible fixtures per spec and exposes the `TEST_SEED` environment variable to control execution order. `pnpm test` runs Jest in parallel workers and enforces coverage collection.
 
 ## Continuous Integration
 

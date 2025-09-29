@@ -1,8 +1,13 @@
-import type { DataSource } from 'typeorm';
-import { TransactionalTestContext, type TransactionalTestLifecycle } from './lifecycle/TransactionalTestContext';
+import type { DataSource } from "typeorm";
+import {
+  TypeormTestDbContext,
+  type TypeormTestDbLifecycle,
+} from "./lifecycle/TypeormTestDbContext";
 
-export const createTransactionalTestContext = (dataSource: DataSource): TransactionalTestLifecycle => {
-  return new TransactionalTestContext(dataSource);
+export const TypeormTestDB = (
+  dataSource: DataSource
+): TypeormTestDbLifecycle => {
+  return new TypeormTestDbContext(dataSource);
 };
 
-export type { TransactionalTestLifecycle };
+export type { TypeormTestDbLifecycle };

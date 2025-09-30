@@ -4,7 +4,6 @@ import { Product } from "../entities";
 
 const productNotFoundMessage = "Product not found for sku";
 const nonPositiveQuantityMessage = "Quantity must be greater than zero for sku";
-const restockIsolationLevel: IsolationLevel = "READ COMMITTED";
 
 export interface InventoryRestockItem {
   readonly sku: string;
@@ -25,7 +24,7 @@ export class TypeormTestDbInventoryService {
       return [];
     }
 
-    return await this.dataSource.transaction(restockIsolationLevel, async (manager) => {
+    return await this.dataSource.transaction(async (manager) => {
       const productRepository = manager.getRepository(Product);
       const restockedProducts: Product[] = [];
 

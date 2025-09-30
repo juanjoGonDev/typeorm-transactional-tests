@@ -1,13 +1,12 @@
 import type { DataSource } from "typeorm";
-import {
-  TypeormTestDbContext,
-  type TypeormTestDbLifecycle,
-} from "./lifecycle/TypeormTestDbContext";
+import { TypeormTestDb, type TypeormTestDbOptions } from "./lifecycle/TypeormTestDb";
 
 export const TypeormTestDB = (
-  dataSource: DataSource
-): TypeormTestDbLifecycle => {
-  return new TypeormTestDbContext(dataSource);
+  dataSource: DataSource,
+  options?: TypeormTestDbOptions
+): TypeormTestDb => {
+  return new TypeormTestDb(dataSource, options);
 };
 
-export type { TypeormTestDbLifecycle };
+export { TypeormTestDb };
+export type { TypeormTestDbOptions };

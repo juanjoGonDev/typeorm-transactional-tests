@@ -16,10 +16,35 @@ TypeORM Test DB wraps every Jest spec in an isolated database transaction. The h
 
 ## Installation
 
+<details>
+<summary>pnpm</summary>
+
 ```bash
-pnpm add typeorm-test-db
-pnpm add typeorm # peer dependency example
+pnpm add -D typeorm-test-db
+pnpm add typeorm
 ```
+
+</details>
+
+<details>
+<summary>npm</summary>
+
+```bash
+npm install -D typeorm-test-db
+npm install typeorm
+```
+
+</details>
+
+<details>
+<summary>Yarn</summary>
+
+```bash
+yarn add -D typeorm-test-db
+yarn add typeorm
+```
+
+</details>
 
 Install TypeORM in the host project if it is not already available.
 
@@ -43,7 +68,9 @@ const dataSource = new DataSource({
   entities: [],
 });
 
-const lifecycle = TypeormTestDB(dataSource);
+const lifecycle = TypeormTestDB(dataSource, {
+  isolationLevel: "REPEATABLE READ",
+});
 
 beforeEach(async () => {
   await lifecycle.init();

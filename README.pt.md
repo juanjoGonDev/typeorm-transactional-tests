@@ -16,10 +16,35 @@ TypeORM Test DB envolve cada spec do Jest em uma transação de banco de dados i
 
 ## Instalação
 
+<details>
+<summary>pnpm</summary>
+
 ```bash
-pnpm add typeorm-test-db
-pnpm add typeorm # dependência peer obrigatória
+pnpm add -D typeorm-test-db
+pnpm add typeorm
 ```
+
+</details>
+
+<details>
+<summary>npm</summary>
+
+```bash
+npm install -D typeorm-test-db
+npm install typeorm
+```
+
+</details>
+
+<details>
+<summary>Yarn</summary>
+
+```bash
+yarn add -D typeorm-test-db
+yarn add typeorm
+```
+
+</details>
 
 Instale o TypeORM no projeto hospedeiro caso ainda não esteja disponível.
 
@@ -43,7 +68,9 @@ const dataSource = new DataSource({
   entities: [],
 });
 
-const lifecycle = TypeormTestDB(dataSource);
+const lifecycle = TypeormTestDB(dataSource, {
+  isolationLevel: "REPEATABLE READ",
+});
 
 beforeEach(async () => {
   await lifecycle.init();

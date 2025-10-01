@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.3](https://github.com/juanjoGonDev/typeorm-test-db/compare/v1.0.2...v1.0.3) (2025-10-01)
+
+
+### Features
+
+* allow configuring isolation level and expand tests ([#32](https://github.com/juanjoGonDev/typeorm-test-db/issues/32)) ([2f234f4](https://github.com/juanjoGonDev/typeorm-test-db/commit/2f234f41795ab9780da4a4f57322a1c4bfa85ca5))
+
 ### [1.0.2](https://github.com/juanjoGonDev/typeorm-test-db/compare/v1.0.1...v1.0.2) (2025-09-30)
 
 

@@ -54,7 +54,7 @@
     "@types/seedrandom": "^3.0.5",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.21.0",
-    "better-sqlite3": "^9.4.3",
+    "better-sqlite3": "^12.4.1",
     "cross-env": "7.0.3",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^10.1.8",

@@ -49,7 +49,7 @@ devDependencies:
     version: 30.2.0(@types/node@24.7.0)(ts-node@10.9.2)
   mysql2:
     specifier: ^3.11.2
-    version: 3.15.1
+    version: 3.15.2
   pg:
     specifier: ^8.11.5
     version: 8.16.3
@@ -76,7 +76,7 @@ devDependencies:
     version: 10.9.2(@types/node@24.7.0)(typescript@5.9.3)
   typeorm:
     specifier: 0.3.27
-    version: 0.3.27(better-sqlite3@9.4.3)(mysql2@3.15.1)(pg@8.16.3)(reflect-metadata@0.2.2)(sqlite3@5.1.7)(ts-node@10.9.2)
+    version: 0.3.27(better-sqlite3@9.4.3)(mysql2@3.15.2)(pg@8.16.3)(reflect-metadata@0.2.2)(sqlite3@5.1.7)(ts-node@10.9.2)
   typescript:
     specifier: ^5.3.3
     version: 5.9.3
@@ -4156,8 +4156,8 @@ packages:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
     dev: true
 
-  /mysql2@3.15.1:
-    resolution: {integrity: sha512-WZMIRZstT2MFfouEaDz/AGFnGi1A2GwaDe7XvKTdRJEYiAHbOrh4S3d8KFmQeh11U85G+BFjIvS1Di5alusZsw==}
+  /mysql2@3.15.2:
+    resolution: {integrity: sha512-kFm5+jbwR5mC+lo+3Cy46eHiykWSpUtTLOH3GE+AR7GeLq8PgfJcvpMiyVWk9/O53DjQsqm6a3VOOfq7gYWFRg==}
     engines: {node: '>= 8.0'}
     dependencies:
       aws-ssl-profiles: 1.1.2
@@ -5515,7 +5515,7 @@ packages:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
     dev: true
 
-  /typeorm@0.3.27(better-sqlite3@9.4.3)(mysql2@3.15.1)(pg@8.16.3)(reflect-metadata@0.2.2)(sqlite3@5.1.7)(ts-node@10.9.2):
+  /typeorm@0.3.27(better-sqlite3@9.4.3)(mysql2@3.15.2)(pg@8.16.3)(reflect-metadata@0.2.2)(sqlite3@5.1.7)(ts-node@10.9.2):
     resolution: {integrity: sha512-pNV1bn+1n8qEe8tUNsNdD8ejuPcMAg47u2lUGnbsajiNUr3p2Js1XLKQjBMH0yMRMDfdX8T+fIRejFmIwy9x4A==}
     engines: {node: '>=16.13.0'}
     hasBin: true
@@ -5581,7 +5581,7 @@ packages:
       dedent: 1.7.0
       dotenv: 16.6.1
       glob: 10.4.5
-      mysql2: 3.15.1
+      mysql2: 3.15.2
       pg: 8.16.3
       reflect-metadata: 0.2.2
       sha.js: 2.4.12

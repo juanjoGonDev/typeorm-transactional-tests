@@ -25,6 +25,7 @@ env:
 
 jobs:
   release:
+    if: github.actor == github.repository_owner || github.actor == 'github-actions'
     name: 🆕 Release${{ github.event.inputs.dry_run == 'true' && ' (dry)' || '' }}
     runs-on: ubuntu-latest
     environment: admin

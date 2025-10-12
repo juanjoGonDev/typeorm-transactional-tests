@@ -46,6 +46,7 @@ run-name: 🔄 Auto release${{ github.event.inputs.dry_run == 'true' && ' (dry)'
 
 jobs:
   release:
+    if: github.actor == github.repository_owner || github.actor == 'github-actions'
     name: 🚀 Auto release${{ github.event.inputs.dry_run == 'true' && ' (dry)' || '' }}
     runs-on: ubuntu-latest
     environment: admin
